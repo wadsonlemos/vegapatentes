@@ -129,7 +129,7 @@ col_inv, col_app = st.columns(2)
 
 with col_inv:
     st.subheader("👤 Principais Inventores")
-    inv_list = [n for sub in df["inventors"] for n in sub if n]
+    inv_list = [str(n) for sub in df["inventors"] for n in sub if n]
     if inv_list:
         df_inv = pd.DataFrame(Counter(inv_list).most_common(20), columns=["Inventor", "Patentes"])
         df_inv = df_inv.sort_values("Patentes")
@@ -149,7 +149,7 @@ with col_inv:
 
 with col_app:
     st.subheader("🏢 Principais Candidatos (Requerentes)")
-    app_list = [n for sub in df["applicants"] for n in sub if n]
+    app_list = [str(n) for sub in df["applicants"] for n in sub if n]
     if app_list:
         df_app = pd.DataFrame(Counter(app_list).most_common(20), columns=["Requerente", "Patentes"])
         df_app = df_app.sort_values("Patentes")
@@ -171,7 +171,7 @@ st.divider()
 
 # ── Gráfico 4: Top Proprietários ──────────────────────────────────────────────
 st.subheader("🏛️ Principais Proprietários")
-own_list = [n for sub in df["owners"] for n in sub if n]
+own_list = [str(n) for sub in df["owners"] for n in sub if n and isinstance(n, (str, int))]
 if own_list:
     df_own = pd.DataFrame(Counter(own_list).most_common(20), columns=["Proprietário", "Patentes"])
     df_own = df_own.sort_values("Patentes")
@@ -196,7 +196,7 @@ col_cpc, col_ipcr = st.columns(2)
 
 with col_cpc:
     st.subheader("🗂️ Top Classificações CPC")
-    cpc_list = [c[:7] for sub in df["cpc"] for c in sub if c]
+    cpc_list = [str(c)[:7] for sub in df["cpc"] for c in sub if c]
     if cpc_list:
         df_cpc = pd.DataFrame(Counter(cpc_list).most_common(15), columns=["CPC", "count"])
         df_cpc = df_cpc.sort_values("count")
@@ -216,7 +216,7 @@ with col_cpc:
 
 with col_ipcr:
     st.subheader("🗂️ Top Classificações IPCR")
-    ipcr_list = [c[:7] for sub in df["ipcr"] for c in sub if c]
+    ipcr_list = [str(c)[:7] for sub in df["ipcr"] for c in sub if c]
     if ipcr_list:
         df_ipcr = pd.DataFrame(Counter(ipcr_list).most_common(15), columns=["IPCR", "count"])
         df_ipcr = df_ipcr.sort_values("count")
@@ -267,4 +267,4 @@ df_tabela = df[["ano", "titulo", "docType", "jurisdicao", "citedBy"]].copy()
 df_tabela.columns = ["Ano", "Título", "Tipo", "Jurisdição", "Citações"]
 st.dataframe(df_tabela, use_container_width=True, hide_index=True)
 
-st.caption("Dashboard desenvolvido com Streamlit + Altair | Dados: Lens.org")
+st.caption(" Dados: Lens.org")
