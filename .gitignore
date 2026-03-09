@@ -1,0 +1,9 @@
+# Secrets - NUNCA enviar para o GitHub!
+.streamlit/secrets.toml
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.env
+venv/
