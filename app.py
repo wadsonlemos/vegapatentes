@@ -33,17 +33,18 @@ def fetch_patents(size=100):
             "date_publ",
             "country",
             "biblio.invention_title",
-            "biblio.parties.inventors",
-            "biblio.parties.applicants"
+            "biblio.parties"
         ],
         "sort": [{"date_publ": "desc"}]
     }
-    resp = requests.post(API_URL, headers=HEADERS, json=body, timeout=30)
-    if resp.status_code == 200:
-        return resp.json()
-    else:
-        st.error(f"Erro na API: {resp.status_code} — {resp.text}")
-        return None
+    try:
+        resp = requests.post(API_URL, headers=HEADERS, json=body, timeout=30)
+        if resp.status_code == 200:
+            return resp.json()
+        else:
+            return {"error": f"{resp.status_code}", "message": resp.text}
+    except Exception as e:
+        return {"error": "exception", "message": str(e)}
 
 # ── Interface ──────────────────────────────────────────────────────────────────
 
@@ -56,11 +57,31 @@ if st.button("🔄 Carregar / Atualizar dados"):
 
 data = fetch_patents(size=100)
 
-if not data:
+# Tratamento de erro robusto
+if data is None:
+    st.error("A API não retornou dados. Verifique o token e tente novamente.")
     st.stop()
 
+if "error" in data:
+    st.error(f"Erro na API: {data['error']} — {data.get('message', '')}")
+    st.stop()
+
+# Mostra estrutura da resposta para debug (remova depois)
+with st.expander("🔍 Debug: estrutura da resposta da API"):
+    keys = list(data.keys())
+    st.write("Chaves na resposta:", keys)
+    if "data" in data and len(data["data"]) > 0:
+        st.write("Chaves do primeiro registro:", list(data["data"][0].keys()))
+        st.json(data["data"][0])
+
 hits = data.get("data", [])
-total_api = data.get("total", {}).get("value", 0)
+total_raw = data.get("total", 0)
+
+# total pode ser int ou dict dependendo da versão da API
+if isinstance(total_raw, dict):
+    total_api = total_raw.get("value", 0)
+else:
+    total_api = int(total_raw) if total_raw else 0
 
 if not hits:
     st.warning("Nenhuma patente encontrada.")
@@ -70,19 +91,21 @@ if not hits:
 
 records = []
 for h in hits:
-    # Data/Ano
     date = h.get("date_publ", "")
-    year = date[:4] if date else "Desconhecido"
-
-    # País
+    year = str(date)[:4] if date else "Desconhecido"
     country = h.get("country", "Desconhecido")
 
-    # Título
-    titles = h.get("biblio", {}).get("invention_title", [])
-    title = titles[0].get("text", "Sem título") if titles else "Sem título"
+    biblio = h.get("biblio", {})
 
-    # Inventores — dentro de biblio.parties.inventors
-    parties = h.get("biblio", {}).get("parties", {})
+    # Título
+    titles = biblio.get("invention_title", [])
+    if isinstance(titles, list) and titles:
+        title = titles[0].get("text", "Sem título")
+    else:
+        title = "Sem título"
+
+    # Inventores
+    parties = biblio.get("parties", {})
     inventors_raw = parties.get("inventors", [])
     inventor_names = []
     for inv in inventors_raw:
@@ -91,7 +114,7 @@ for h in hits:
         if name:
             inventor_names.append(name.strip())
 
-    # Requerentes — dentro de biblio.parties.applicants
+    # Requerentes
     applicants_raw = parties.get("applicants", [])
     applicant_names = []
     for app in applicants_raw:
