@@ -9,65 +9,34 @@ st.set_page_config(
     layout="wide"
 )
 
-# ── Token ──────────────────────────────────────────────────────────────────────
 TOKEN = st.secrets.get("LENS_TOKEN", "")
-
 HEADERS = {
     "Authorization": f"Bearer {TOKEN}",
     "Content-Type": "application/json"
 }
-
 API_URL = "https://api.lens.org/patent/search"
 
-# ── Funções de busca ───────────────────────────────────────────────────────────
+if not TOKEN:
+    st.error("Token não encontrado! Adicione LENS_TOKEN em .streamlit/secrets.toml")
+    st.stop()
 
-def fetch_patents(size=100, scroll=None):
-    """Busca patentes com jurisdição BR."""
+# ── Busca de dados ─────────────────────────────────────────────────────────────
+
+@st.cache_data(ttl=3600, show_spinner="Buscando patentes na API do Lens.org...")
+def fetch_patents(size=100):
     body = {
         "query": {
             "term": {"jurisdiction": "BR"}
         },
         "size": size,
         "include": [
-            "date_published", "jurisdiction",
-            "applicant", "inventor", "biblio"
+            "date_published",
+            "jurisdiction",
+            "inventor",
+            "applicant",
+            "biblio.invention_title"
         ],
-        "sort": [{"date_published": "asc"}]
-    }
-    if scroll:
-        body["scroll_id"] = scroll
-
-    resp = requests.post(API_URL, headers=HEADERS, json=body, timeout=30)
-    if resp.status_code == 200:
-        return resp.json()
-    else:
-        st.error(f"Erro na API: {resp.status_code} — {resp.text}")
-        return None
-
-
-def fetch_aggregations():
-    """Busca agregações para os gráficos."""
-    body = {
-        "query": {"term": {"jurisdiction": "BR"}},
-        "size": 0,
-        "aggregations": {
-            "por_ano": {
-                "date_histogram": {
-                    "field": "date_published",
-                    "calendar_interval": "year",
-                    "format": "yyyy"
-                }
-            },
-            "por_pais": {
-                "terms": {"field": "jurisdiction", "size": 30}
-            },
-            "top_inventores": {
-                "terms": {"field": "inventor.name", "size": 15}
-            },
-            "top_empresas": {
-                "terms": {"field": "applicant.name", "size": 15}
-            }
-        }
+        "sort": [{"date_published": "desc"}]
     }
     resp = requests.post(API_URL, headers=HEADERS, json=body, timeout=30)
     if resp.status_code == 200:
@@ -75,83 +44,90 @@ def fetch_aggregations():
     else:
         st.error(f"Erro na API: {resp.status_code} — {resp.text}")
         return None
-
 
 # ── Interface ──────────────────────────────────────────────────────────────────
 
 st.title("📊 Dashboard de Patentes Brasileiras")
 st.caption("Fonte: Lens.org Patent API — Jurisdição: BR")
 
-if not TOKEN:
-    st.error("Token não encontrado! Adicione LENS_TOKEN em .streamlit/secrets.toml")
-    st.stop()
-
-# Botão de atualizar
 if st.button("🔄 Carregar / Atualizar dados"):
     st.cache_data.clear()
+    st.rerun()
 
-@st.cache_data(ttl=3600, show_spinner="Buscando dados na API do Lens.org...")
-def get_data():
-    return fetch_aggregations()
-
-data = get_data()
+data = fetch_patents(size=100)
 
 if not data:
     st.stop()
 
-aggs = data.get("aggregations", {})
+hits = data.get("data", [])
+total_api = data.get("total", {}).get("value", 0)
+
+if not hits:
+    st.warning("Nenhuma patente encontrada.")
+    st.stop()
+
+# ── Processar dados ────────────────────────────────────────────────────────────
+
+records = []
+for h in hits:
+    date = h.get("date_published", "")
+    year = date[:4] if date else "Desconhecido"
+    jurisdiction = h.get("jurisdiction", "Desconhecido")
+    inventors = h.get("inventor", [])
+    inventor_names = [i.get("name", "") for i in inventors if i.get("name")]
+    applicants = h.get("applicant", [])
+    applicant_names = [a.get("name", "") for a in applicants if a.get("name")]
+    titles = h.get("biblio", {}).get("invention_title", [])
+    title = titles[0].get("text", "Sem título") if titles else "Sem título"
+
+    records.append({
+        "ano": year,
+        "jurisdicao": jurisdiction,
+        "inventores": inventor_names,
+        "empresas": applicant_names,
+        "titulo": title
+    })
+
+df = pd.DataFrame(records)
 
 # ── Métricas rápidas ───────────────────────────────────────────────────────────
-total = data.get("total", {}).get("value", 0)
 col1, col2, col3 = st.columns(3)
-col1.metric("Total de Patentes BR", f"{total:,}".replace(",", "."))
-
-anos_buckets = aggs.get("por_ano", {}).get("buckets", [])
-if anos_buckets:
-    ultimo_ano = anos_buckets[-1]
-    col2.metric("Último ano disponível", ultimo_ano.get("key_as_string", "—"))
-    col3.metric("Patentes no último ano", f"{ultimo_ano.get('doc_count', 0):,}".replace(",", "."))
+col1.metric("Total de patentes (API)", f"{total_api:,}".replace(",", "."))
+col2.metric("Registros carregados", len(df))
+col3.metric("Anos cobertos", df["ano"].nunique())
 
 st.divider()
 
-# ── Gráfico 1: Patentes por Ano ────────────────────────────────────────────────
+# ── Gráfico 1: Patentes por Ano ───────────────────────────────────────────────
 st.subheader("📅 Patentes por Ano")
+df_anos = df.groupby("ano").size().reset_index(name="Patentes")
+df_anos = df_anos[df_anos["ano"] != "Desconhecido"].sort_values("ano")
 
-if anos_buckets:
-    df_anos = pd.DataFrame([
-        {"Ano": b["key_as_string"], "Patentes": b["doc_count"]}
-        for b in anos_buckets
-    ])
-    chart_anos = (
-        alt.Chart(df_anos)
-        .mark_line(point=True, color="#1f77b4")
-        .encode(
-            x=alt.X("Ano:O", title="Ano"),
-            y=alt.Y("Patentes:Q", title="Número de Patentes"),
-            tooltip=["Ano", "Patentes"]
-        )
-        .properties(height=300)
-        .interactive()
+chart_anos = (
+    alt.Chart(df_anos)
+    .mark_line(point=True, color="#1f77b4")
+    .encode(
+        x=alt.X("ano:O", title="Ano"),
+        y=alt.Y("Patentes:Q", title="Número de Patentes"),
+        tooltip=["ano", "Patentes"]
     )
-    st.altair_chart(chart_anos, use_container_width=True)
-else:
-    st.info("Sem dados de ano disponíveis.")
+    .properties(height=300)
+    .interactive()
+)
+st.altair_chart(chart_anos, use_container_width=True)
 
 st.divider()
 
-# ── Gráficos 2 e 3 lado a lado ─────────────────────────────────────────────────
+# ── Gráficos 2 e 3: Inventores e Empresas ────────────────────────────────────
 col_inv, col_emp = st.columns(2)
 
-# Ranking de Inventores
 with col_inv:
     st.subheader("👤 Top Inventores")
-    inv_buckets = aggs.get("top_inventores", {}).get("buckets", [])
-    if inv_buckets:
-        df_inv = pd.DataFrame([
-            {"Inventor": b["key"], "Patentes": b["doc_count"]}
-            for b in inv_buckets
-        ]).sort_values("Patentes")
-
+    inv_list = [nome for sublist in df["inventores"] for nome in sublist if nome]
+    if inv_list:
+        df_inv = pd.Series(inv_list).value_counts().head(15).reset_index()
+        df_inv.columns = ["Inventor", "Patentes"]
+        df_inv = df_inv.sort_values("Patentes")
         chart_inv = (
             alt.Chart(df_inv)
             .mark_bar(color="#2ca02c")
@@ -166,16 +142,13 @@ with col_inv:
     else:
         st.info("Sem dados de inventores disponíveis.")
 
-# Ranking de Empresas
 with col_emp:
     st.subheader("🏢 Top Empresas / Requerentes")
-    emp_buckets = aggs.get("top_empresas", {}).get("buckets", [])
-    if emp_buckets:
-        df_emp = pd.DataFrame([
-            {"Empresa": b["key"], "Patentes": b["doc_count"]}
-            for b in emp_buckets
-        ]).sort_values("Patentes")
-
+    emp_list = [nome for sublist in df["empresas"] for nome in sublist if nome]
+    if emp_list:
+        df_emp = pd.Series(emp_list).value_counts().head(15).reset_index()
+        df_emp.columns = ["Empresa", "Patentes"]
+        df_emp = df_emp.sort_values("Patentes")
         chart_emp = (
             alt.Chart(df_emp)
             .mark_bar(color="#ff7f0e")
@@ -192,28 +165,29 @@ with col_emp:
 
 st.divider()
 
-# ── Gráfico 4: Patentes por País/Jurisdição ────────────────────────────────────
+# ── Gráfico 4: Patentes por Jurisdição ───────────────────────────────────────
 st.subheader("🌎 Patentes por Jurisdição")
-pais_buckets = aggs.get("por_pais", {}).get("buckets", [])
-if pais_buckets:
-    df_pais = pd.DataFrame([
-        {"Jurisdição": b["key"], "Patentes": b["doc_count"]}
-        for b in pais_buckets
-    ]).sort_values("Patentes", ascending=False)
+df_jur = df.groupby("jurisdicao").size().reset_index(name="Patentes").sort_values("Patentes", ascending=False)
 
-    chart_pais = (
-        alt.Chart(df_pais)
-        .mark_bar(color="#9467bd")
-        .encode(
-            x=alt.X("Jurisdição:N", sort="-y", title="Jurisdição"),
-            y=alt.Y("Patentes:Q", title="Número de Patentes"),
-            tooltip=["Jurisdição", "Patentes"]
-        )
-        .properties(height=300)
-        .interactive()
+chart_jur = (
+    alt.Chart(df_jur)
+    .mark_bar(color="#9467bd")
+    .encode(
+        x=alt.X("jurisdicao:N", sort="-y", title="Jurisdição"),
+        y=alt.Y("Patentes:Q", title="Número de Patentes"),
+        tooltip=["jurisdicao", "Patentes"]
     )
-    st.altair_chart(chart_pais, use_container_width=True)
-else:
-    st.info("Sem dados de jurisdição disponíveis.")
+    .properties(height=300)
+    .interactive()
+)
+st.altair_chart(chart_jur, use_container_width=True)
+
+st.divider()
+
+# ── Tabela ────────────────────────────────────────────────────────────────────
+st.subheader("📋 Lista de Patentes")
+df_tabela = df[["ano", "titulo", "jurisdicao"]].copy()
+df_tabela.columns = ["Ano", "Título", "Jurisdição"]
+st.dataframe(df_tabela, use_container_width=True, hide_index=True)
 
 st.caption("Dashboard desenvolvido com Streamlit + Altair (Vega-Lite) | Dados: Lens.org")
