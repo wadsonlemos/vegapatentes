@@ -1,7 +1,5 @@
 import streamlit as st
 import requests
-import re
-import xml.etree.ElementTree as ET
 import pandas as pd
 import altair as alt
 from collections import Counter
@@ -12,177 +10,136 @@ st.set_page_config(
     layout="wide"
 )
 
-# ── Namespaces WIPO ST96 ───────────────────────────────────────────────────────
-PAT = "http://www.wipo.int/standards/XMLSchema/ST96/Patent"
-COM = "http://www.wipo.int/standards/XMLSchema/ST96/Common"
-def p(tag): return f"{{{PAT}}}{tag}"
-def c(tag): return f"{{{COM}}}{tag}"
+JSON_URL = "https://raw.githubusercontent.com/wadsonlemos/vegapatentes/main/ibict_slim.json"
 
-API_BASE = "https://pi-api-dev.ibict.br/api/v1/patente/"
-
-# ── Busca e parse ──────────────────────────────────────────────────────────────
-
-def parse_xml(xml_text):
-    """Parseia XML WIPO ST96 e retorna lista de registros."""
-    start = xml_text.find("<pat:PatentBag")
-    if start == -1:
-        return []
-    xml_clean = re.sub(r"&(?!(amp|lt|gt|quot|apos);)", "&amp;", xml_text[start:])
-    try:
-        root = ET.fromstring(xml_clean)
-    except ET.ParseError:
-        return []
+# ── Carrega dados ──────────────────────────────────────────────────────────────
+@st.cache_data(ttl=3600, show_spinner="Carregando dados do IBICT...")
+def load_data():
+    resp = requests.get(JSON_URL, timeout=60)
+    data = resp.json()
+    docs = data.get("results", [])
 
     records = []
-    for b in root:
-        pub_date = b.findtext(f"{p('PatentPublicationIdentification')}/{c('PublicationDate')}") or ""
-        year = pub_date[:4] if pub_date else "Desconhecido"
-
-        title = b.findtext(p("InventionTitle")) or "Sem título"
-
-        office = b.findtext(f"{p('PatentPublicationIdentification')}/{c('IPOfficeCode')}") or "BR"
-
-        applicants = [
-            el.text for el in b.findall(f".//{p('ApplicantBag')}//{c('OrganizationStandardName')}")
-            if el.text
-        ]
-        if not applicants:
-            applicants = [
-                el.text for el in b.findall(f".//{p('ApplicantBag')}//{c('FreeFormatName')}")
-                if el.text
-            ]
-
-        inventors = [
-            el.text for el in b.findall(f".//{p('InventorBag')}//{c('FreeFormatName')}")
-            if el.text
-        ]
-
-        ipc_main = b.findtext(f".//{p('IPCClassification')}/{p('MainClassification')}") or ""
-        ipc_further = [
-            el.text for el in b.findall(f".//{p('IPCClassification')}/{p('FurtherClassification')}")
-            if el.text
-        ]
-        all_ipc = ([ipc_main] if ipc_main else []) + ipc_further
-
-        cpc_section = b.findtext(f".//{p('MainCPC')}//{p('CPCSection')}") or ""
-        cpc_class   = b.findtext(f".//{p('MainCPC')}//{p('Class')}") or ""
-        cpc_sub     = b.findtext(f".//{p('MainCPC')}//{p('Subclass')}") or ""
-        cpc_mg      = b.findtext(f".//{p('MainCPC')}//{p('MainGroup')}") or ""
-        cpc_main_str = f"{cpc_section}{cpc_class}{cpc_sub} {cpc_mg}".strip() if cpc_section else ""
-
-        further_cpcs = []
-        for fc in b.findall(f".//{p('FurtherCPC')}"):
-            s = fc.findtext(f".//{p('CPCSection')}") or ""
-            cl = fc.findtext(f".//{p('Class')}") or ""
-            sb = fc.findtext(f".//{p('Subclass')}") or ""
-            mg = fc.findtext(f".//{p('MainGroup')}") or ""
-            if s:
-                further_cpcs.append(f"{s}{cl}{sb} {mg}".strip())
-        all_cpc = ([cpc_main_str] if cpc_main_str else []) + further_cpcs
-
+    for d in docs:
         records.append({
-            "ano":        year,
-            "titulo":     title,
-            "pais":       office,
-            "applicants": applicants,
-            "inventors":  inventors,
-            "ipc":        all_ipc,
-            "cpc":        all_cpc,
-            "pub_date":   pub_date,
+            "titulo":       d.get("title", "Sem título"),
+            "ano_deposito": str(d.get("deposit_year", "")) or "Desconhecido",
+            "ano_concessao":str(d.get("concession_year", "")) if d.get("concession_year") else "Pendente",
+            "pais":         d.get("country_code", "BR"),
+            "status":       d.get("status", "Desconhecido"),
+            "tipo":         d.get("patent_type", "Desconhecido") or "Não informado",
+            "applicants":   d.get("applicants", []),
+            "inventors":    d.get("inventors", []),
+            "cpc":          [c[:7] for c in d.get("cpc", []) if c],
+            "ipc":          [c[:7] for c in d.get("ipc", []) if c],
         })
-    return records
-
-@st.cache_data(ttl=3600, show_spinner="Buscando patentes na API do IBICT...")
-def load_data(pages=5):
-    """Carrega múltiplas páginas da API."""
-    all_records = []
-    limit = 100
-    for page in range(pages):
-        offset = page * limit
-        url = f"{API_BASE}?limit={limit}&offset={offset}"
-        try:
-            resp = requests.get(url, timeout=30, verify=False)
-            if resp.status_code == 200:
-                records = parse_xml(resp.text)
-                if not records:
-                    break
-                all_records.extend(records)
-            else:
-                break
-        except Exception as e:
-            st.warning(f"Erro na página {page}: {e}")
-            break
-    return pd.DataFrame(all_records)
-
-# ── Suprime warning de SSL ─────────────────────────────────────────────────────
-import urllib3
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+    return pd.DataFrame(records), data.get("total", len(docs))
 
 # ── Interface ──────────────────────────────────────────────────────────────────
 st.title("📊 Dashboard de Patentes Brasileiras")
-st.caption("Fonte: IBICT — API pi-api-dev.ibict.br | Padrão WIPO ST96")
+st.caption("Fonte: IBICT — pi-api-dev.ibict.br | 10.000 registros")
 
-col_ctrl1, col_ctrl2 = st.columns([1, 3])
-with col_ctrl1:
-    pages = st.slider("Páginas a carregar (100 por página)", 1, 20, 5)
-with col_ctrl2:
-    if st.button("🔄 Carregar / Atualizar dados"):
-        st.cache_data.clear()
-        st.rerun()
+if st.button("🔄 Atualizar dados"):
+    st.cache_data.clear()
+    st.rerun()
 
-df = load_data(pages=pages)
+df, total = load_data()
 
 if df.empty:
-    st.error("Não foi possível carregar dados da API do IBICT.")
+    st.error("Não foi possível carregar os dados.")
     st.stop()
 
+# ── Filtros na sidebar ─────────────────────────────────────────────────────────
+st.sidebar.header("🔎 Filtros")
+
+anos = sorted([a for a in df["ano_deposito"].unique() if a != "Desconhecido"])
+ano_sel = st.sidebar.multiselect("Ano de Depósito", anos, default=[])
+
+status_opts = sorted(df["status"].unique())
+status_sel = st.sidebar.multiselect("Status", status_opts, default=[])
+
+tipo_opts = sorted(df["tipo"].unique())
+tipo_sel = st.sidebar.multiselect("Tipo de Patente", tipo_opts, default=[])
+
+# Aplica filtros
+dff = df.copy()
+if ano_sel:
+    dff = dff[dff["ano_deposito"].isin(ano_sel)]
+if status_sel:
+    dff = dff[dff["status"].isin(status_sel)]
+if tipo_sel:
+    dff = dff[dff["tipo"].isin(tipo_sel)]
+
 # ── Métricas ───────────────────────────────────────────────────────────────────
-c1, c2, c3, c4 = st.columns(4)
-c1.metric("Registros carregados", f"{len(df):,}".replace(",", "."))
-c2.metric("Anos cobertos", df[df["ano"] != "Desconhecido"]["ano"].nunique())
-c3.metric("Países/Jurisdições", df["pais"].nunique())
-total_inv = sum(len(x) for x in df["inventors"])
-c4.metric("Total de inventores", f"{total_inv:,}".replace(",", "."))
+m1, m2, m3, m4 = st.columns(4)
+m1.metric("Total na base IBICT", f"{total:,}".replace(",", "."))
+m2.metric("Registros filtrados", f"{len(dff):,}".replace(",", "."))
+m3.metric("Anos cobertos", dff[dff["ano_deposito"] != "Desconhecido"]["ano_deposito"].nunique())
+m4.metric("Status distintos", dff["status"].nunique())
 
 st.divider()
 
-# ── Gráfico 1: Patentes por Ano ───────────────────────────────────────────────
+# ── Gráfico 1: Patentes ao longo do tempo por status ──────────────────────────
 st.subheader("📅 Documentos de Patente ao Longo do Tempo")
-df_anos = (
-    df[df["ano"] != "Desconhecido"]
-    .groupby("ano").size()
-    .reset_index(name="Patentes")
-    .sort_values("ano")
+df_tempo = (
+    dff[dff["ano_deposito"] != "Desconhecido"]
+    .groupby(["ano_deposito", "status"]).size()
+    .reset_index(name="count")
+    .sort_values("ano_deposito")
 )
-if not df_anos.empty:
-    chart_anos = (
-        alt.Chart(df_anos)
-        .mark_bar(color="#2d8a4e")
-        .encode(
-            x=alt.X("ano:O", title="Ano de Publicação"),
-            y=alt.Y("Patentes:Q", title="Contagem"),
-            tooltip=["ano", "Patentes"]
-        )
-        .properties(height=320)
-        .interactive()
+if not df_tempo.empty:
+    st.altair_chart(
+        alt.Chart(df_tempo).mark_bar().encode(
+            x=alt.X("ano_deposito:O", title="Ano de Depósito"),
+            y=alt.Y("count:Q", title="Contagem"),
+            color=alt.Color("status:N", title="Status"),
+            tooltip=["ano_deposito", "status", "count"]
+        ).properties(height=350).interactive(),
+        use_container_width=True
     )
-    st.altair_chart(chart_anos, use_container_width=True)
 
 st.divider()
 
-# ── Gráfico 2 e 3: Requerentes e Inventores ───────────────────────────────────
+# ── Gráfico 2: Pizza por status + Pizza por tipo ───────────────────────────────
+col_s, col_t = st.columns(2)
+
+with col_s:
+    st.subheader("🥧 Patentes por Status")
+    df_status = dff.groupby("status").size().reset_index(name="count")
+    st.altair_chart(
+        alt.Chart(df_status).mark_arc(innerRadius=60).encode(
+            theta="count:Q",
+            color=alt.Color("status:N", title="Status"),
+            tooltip=["status", "count"]
+        ).properties(height=300),
+        use_container_width=True
+    )
+
+with col_t:
+    st.subheader("🥧 Patentes por Tipo")
+    df_tipo = dff.groupby("tipo").size().reset_index(name="count")
+    st.altair_chart(
+        alt.Chart(df_tipo).mark_arc(innerRadius=60).encode(
+            theta="count:Q",
+            color=alt.Color("tipo:N", title="Tipo"),
+            tooltip=["tipo", "count"]
+        ).properties(height=300),
+        use_container_width=True
+    )
+
+st.divider()
+
+# ── Gráfico 3 e 4: Requerentes e Inventores ───────────────────────────────────
 col_app, col_inv = st.columns(2)
 
 with col_app:
     st.subheader("🏢 Principais Candidatos (Requerentes)")
-    app_list = [str(n) for sub in df["applicants"] for n in sub if n]
+    app_list = [str(n) for sub in dff["applicants"] for n in sub if n]
     if app_list:
-        df_app = pd.DataFrame(Counter(app_list).most_common(15), columns=["Requerente", "Patentes"])
-        df_app = df_app.sort_values("Patentes")
+        df_app = pd.DataFrame(Counter(app_list).most_common(15), columns=["Requerente", "Patentes"]).sort_values("Patentes")
         st.altair_chart(
-            alt.Chart(df_app).mark_bar(color="#f58518")
-            .encode(
-                x=alt.X("Patentes:Q"),
+            alt.Chart(df_app).mark_bar(color="#f58518").encode(
+                x="Patentes:Q",
                 y=alt.Y("Requerente:N", sort="-x", title=""),
                 tooltip=["Requerente", "Patentes"]
             ).properties(height=450),
@@ -193,14 +150,12 @@ with col_app:
 
 with col_inv:
     st.subheader("👤 Principais Inventores")
-    inv_list = [str(n) for sub in df["inventors"] for n in sub if n]
+    inv_list = [str(n) for sub in dff["inventors"] for n in sub if n]
     if inv_list:
-        df_inv = pd.DataFrame(Counter(inv_list).most_common(15), columns=["Inventor", "Patentes"])
-        df_inv = df_inv.sort_values("Patentes")
+        df_inv = pd.DataFrame(Counter(inv_list).most_common(15), columns=["Inventor", "Patentes"]).sort_values("Patentes")
         st.altair_chart(
-            alt.Chart(df_inv).mark_bar(color="#54a24b")
-            .encode(
-                x=alt.X("Patentes:Q"),
+            alt.Chart(df_inv).mark_bar(color="#54a24b").encode(
+                x="Patentes:Q",
                 y=alt.Y("Inventor:N", sort="-x", title=""),
                 tooltip=["Inventor", "Patentes"]
             ).properties(height=450),
@@ -211,18 +166,16 @@ with col_inv:
 
 st.divider()
 
-# ── Gráfico 4 e 5: CPC e IPC ──────────────────────────────────────────────────
+# ── Gráfico 5 e 6: CPC e IPC ──────────────────────────────────────────────────
 col_cpc, col_ipc = st.columns(2)
 
 with col_cpc:
     st.subheader("🗂️ Principais Classificações CPC")
-    cpc_list = [str(c)[:7] for sub in df["cpc"] for c in sub if c]
+    cpc_list = [str(x) for sub in dff["cpc"] for x in sub if x]
     if cpc_list:
-        df_cpc = pd.DataFrame(Counter(cpc_list).most_common(15), columns=["CPC", "count"])
-        df_cpc = df_cpc.sort_values("count")
+        df_cpc = pd.DataFrame(Counter(cpc_list).most_common(15), columns=["CPC", "count"]).sort_values("count")
         st.altair_chart(
-            alt.Chart(df_cpc).mark_bar(color="#e45756")
-            .encode(
+            alt.Chart(df_cpc).mark_bar(color="#e45756").encode(
                 x=alt.X("count:Q", title="Patentes"),
                 y=alt.Y("CPC:N", sort="-x", title=""),
                 tooltip=["CPC", "count"]
@@ -234,13 +187,11 @@ with col_cpc:
 
 with col_ipc:
     st.subheader("🗂️ Principais Classificações IPC")
-    ipc_list = [str(i)[:7] for sub in df["ipc"] for i in sub if i]
+    ipc_list = [str(x) for sub in dff["ipc"] for x in sub if x]
     if ipc_list:
-        df_ipc = pd.DataFrame(Counter(ipc_list).most_common(15), columns=["IPC", "count"])
-        df_ipc = df_ipc.sort_values("count")
+        df_ipc = pd.DataFrame(Counter(ipc_list).most_common(15), columns=["IPC", "count"]).sort_values("count")
         st.altair_chart(
-            alt.Chart(df_ipc).mark_bar(color="#72b7b2")
-            .encode(
+            alt.Chart(df_ipc).mark_bar(color="#72b7b2").encode(
                 x=alt.X("count:Q", title="Patentes"),
                 y=alt.Y("IPC:N", sort="-x", title=""),
                 tooltip=["IPC", "count"]
@@ -252,26 +203,33 @@ with col_ipc:
 
 st.divider()
 
-# ── Gráfico 6: Países ─────────────────────────────────────────────────────────
-st.subheader("🌎 Documentos por País/Jurisdição")
-df_pais = df.groupby("pais").size().reset_index(name="Patentes").sort_values("Patentes", ascending=False)
-if not df_pais.empty:
+# ── Gráfico 7: Ano de depósito vs concessão ───────────────────────────────────
+st.subheader("⏱️ Tempo entre Depósito e Concessão")
+df_tempo2 = dff[(dff["ano_deposito"] != "Desconhecido") & (dff["ano_concessao"] != "Pendente")].copy()
+df_tempo2["deposito_num"] = pd.to_numeric(df_tempo2["ano_deposito"], errors="coerce")
+df_tempo2["concessao_num"] = pd.to_numeric(df_tempo2["ano_concessao"], errors="coerce")
+df_tempo2["tempo_anos"] = df_tempo2["concessao_num"] - df_tempo2["deposito_num"]
+df_tempo2 = df_tempo2[(df_tempo2["tempo_anos"] >= 0) & (df_tempo2["tempo_anos"] <= 30)]
+
+if not df_tempo2.empty:
+    df_hist = df_tempo2.groupby("tempo_anos").size().reset_index(name="count")
     st.altair_chart(
-        alt.Chart(df_pais).mark_bar(color="#4c78a8")
-        .encode(
-            x=alt.X("pais:N", sort="-y", title="País"),
-            y=alt.Y("Patentes:Q"),
-            tooltip=["pais", "Patentes"]
+        alt.Chart(df_hist).mark_bar(color="#4c78a8").encode(
+            x=alt.X("tempo_anos:O", title="Anos até Concessão"),
+            y=alt.Y("count:Q", title="Número de Patentes"),
+            tooltip=["tempo_anos", "count"]
         ).properties(height=280).interactive(),
         use_container_width=True
     )
+else:
+    st.info("Sem dados suficientes para este gráfico.")
 
 st.divider()
 
 # ── Tabela ─────────────────────────────────────────────────────────────────────
 st.subheader("📋 Lista de Patentes")
-df_tab = df[["ano", "titulo", "pais", "pub_date"]].copy()
-df_tab.columns = ["Ano", "Título", "País", "Data Publicação"]
+df_tab = dff[["ano_deposito", "titulo", "status", "tipo", "pais"]].copy()
+df_tab.columns = ["Ano Depósito", "Título", "Status", "Tipo", "País"]
 st.dataframe(df_tab, use_container_width=True, hide_index=True)
 
-st.caption("Dashboard Altair (Vega-Lite) | Dados: IBICT — WIPO ST96")
+st.caption("Dashboard com Altair (Vega-Lite) | Dados: IBICT")
