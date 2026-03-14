@@ -12,32 +12,38 @@ Endpoints:
 
 from http.server import HTTPServer, BaseHTTPRequestHandler
 import urllib.request, urllib.error
-import json, sys, traceback, os
+import json, sys, traceback, os, time
 
 TARGET  = "http://pi-api-dev.ibict.br"
 PORT    = 8888
-TIMEOUT = 120
-BATCH   = 500
+TIMEOUT = 60
+BATCH   = 100 # Reduzido para ser mais estável
 YEARS   = range(1990, 2026)   # anos de depósito a varrer
 
 
-def fetch_json(path):
-    """Faz GET em TARGET+path com Accept: application/json. Retorna dict ou None."""
+def fetch_json(path, retries=3):
+    """Faz GET com retentativas e delay."""
     url = TARGET + path
     req = urllib.request.Request(url, headers={
         "Accept":          "application/json",
-        "User-Agent":      "ibict-dashboard-proxy/3.0",
-        "Accept-Language": "pt-BR,pt;q=0.9",
+        "User-Agent":      "ibict-dashboard-proxy/4.0",
     })
-    try:
-        with urllib.request.urlopen(req, timeout=TIMEOUT) as r:
-            return json.loads(r.read().decode("utf-8", errors="replace"))
-    except urllib.error.HTTPError as e:
-        print(f"  [fetch] HTTP {e.code} → {url[:80]}")
-        return None
-    except Exception as e:
-        print(f"  [fetch] ERRO → {url[:80]} — {e}")
-        return None
+    
+    for i in range(retries):
+        try:
+            with urllib.request.urlopen(req, timeout=TIMEOUT) as r:
+                return json.loads(r.read().decode("utf-8", errors="replace"))
+        except urllib.error.HTTPError as e:
+            if e.code == 500:
+                print(f"  [fetch] Erro 500 em {url[:50]}... (Tentativa {i+1}/{retries})")
+            else:
+                print(f"  [fetch] HTTP {e.code} -> {url[:50]}")
+                break
+        except Exception as e:
+            print(f"  [fetch] Erro: {e} (Tentativa {i+1}/{retries})")
+        
+        time.sleep(2 * (i + 1)) # Delay incremental
+    return None
 
 
 class ProxyHandler(BaseHTTPRequestHandler):
@@ -91,6 +97,7 @@ class ProxyHandler(BaseHTTPRequestHandler):
             while True:
                 path = f"/api/v1/patente?limit={BATCH}&offset={offset}&deposit_year={year}"
                 data = fetch_json(path)
+                time.sleep(0.5) # Pausa amigável para a API
                 if not data:
                     break
                 batch = data.get("results") or data.get("data") or []
