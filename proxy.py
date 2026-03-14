@@ -11,8 +11,13 @@ Endpoints:
 """
 
 from http.server import HTTPServer, BaseHTTPRequestHandler
+from socketserver import ThreadingMixIn
 import urllib.request, urllib.error
 import json, sys, traceback, os, time, threading
+
+class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
+    """Handle requests in a separate thread."""
+
 
 TARGET     = "http://pi-api-dev.ibict.br"
 PORT       = 8888
@@ -28,6 +33,7 @@ _cache_ready   = False      # True quando o cache está 100% gerado
 _cache_progress = 0.0       # 0.0 → 1.0
 _cache_message  = "Aguardando início da coleta…"
 _cache_body     = None      # bytes do JSON final (quando pronto)
+_prewarm_thread = None      # Referência para a thread atual
 
 
 def set_cache_state(ready, progress, message, body=None):
@@ -94,6 +100,7 @@ def _prewarm_cache():
 
         offset     = 0
         year_count = 0
+        last_batch_str = None
         while True:
             path = f"/api/v1/patente?limit={BATCH}&offset={offset}&deposit_year={year}"
             data = fetch_json(path)
@@ -103,6 +110,14 @@ def _prewarm_cache():
             batch = data.get("results") or data.get("data") or []
             if not batch:
                 break
+                
+            # Anti-infinite loop: check if API ignored offset and returned the exact same page
+            current_batch_str = json.dumps(batch, sort_keys=True)
+            if current_batch_str == last_batch_str:
+                print(f"  [ano={year}] API retornou registros duplicados no offset {offset} (paginação falhou). Ignorando o resto.")
+                break
+            last_batch_str = current_batch_str
+
             all_records.extend(batch)
             year_count += len(batch)
             offset     += len(batch)
@@ -126,8 +141,12 @@ def _prewarm_cache():
 
 
 def start_prewarm():
-    t = threading.Thread(target=_prewarm_cache, daemon=True, name="CachePrewarm")
-    t.start()
+    global _prewarm_thread
+    if _prewarm_thread and _prewarm_thread.is_alive():
+        print("[cache] O pré-aquecimento já está em andamento. Ignorando.")
+        return
+    _prewarm_thread = threading.Thread(target=_prewarm_cache, daemon=True, name="CachePrewarm")
+    _prewarm_thread.start()
 
 
 # ── HTTP Handler ───────────────────────────────────────────────────────────────
@@ -253,7 +272,7 @@ if __name__ == "__main__":
     # Inicia coleta em background ANTES de aceitar conexões
     start_prewarm()
 
-    server = HTTPServer(("", PORT), ProxyHandler)
+    server = ThreadedHTTPServer(("", PORT), ProxyHandler)
     try:
         server.serve_forever()
     except KeyboardInterrupt:
