@@ -20,4 +20,4 @@ echo "✅ Proxy iniciado na porta 8888"
 nohup python3 -m http.server 8080 > web.log 2>&1 &
 echo "✅ Dashboard iniciado na porta 8080"
 
-echo "✨ Deploy concluído! Acesse http://34.230.54.147:8080"
+echo "✨ Deploy concluído! Acesse http://18.206.184.9:8080"
