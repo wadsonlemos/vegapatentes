@@ -248,6 +248,7 @@
     </div>
 
     <button class="btn-refresh" id="btnRefresh">🔄 Atualizar dados</button>
+    <button class="btn-refresh" id="btnHistory" style="background:var(--bg3); color:var(--text); border:1px solid var(--border); margin-top:8px;">📚 Carregar histórico completo</button>
   </aside>
 
   <!-- ── MAIN ── -->
@@ -443,8 +444,6 @@ async function waitForCache(forceRefresh = false) {
     }
     await new Promise(r => setTimeout(r, 2000));
   }
-  setLoaderProgress(1.0);
-  setLoaderMsg("✅ Dados prontos! Carregando dashboard…");
 }
 
 async function loadData(forceRefresh = false) {
@@ -458,7 +457,9 @@ async function loadData(forceRefresh = false) {
   // Espera o cache estar disponível antes de buscar
   await waitForCache(forceRefresh);
 
-  setLoaderMsg("Baixando dados do cache…");
+  setLoaderProgress(1.0);
+  setLoaderMsg("✅ Dados prontos! Carregando dashboard…");
+  
   const url  = `http://${HOST}:8888/full-data`;
   const resp = await fetch(url, { headers: { Accept: "application/json" } });
 
@@ -472,25 +473,36 @@ async function loadData(forceRefresh = false) {
 }
 
 // ── BUILD FILTERS ─────────────────────────────────────────────────────────────
-function buildFilters() {
+function buildFilters(preserveValues = false) {
   const anos = allData.map(d => d.ano_deposito).filter(Boolean);
   const minA = Math.min(...anos), maxA = Math.max(...anos);
+  
+  const slMin = document.getElementById("slMin");
+  const slMax = document.getElementById("slMax");
 
-  for (const [id, val] of [["slMin", minA], ["slMax", maxA]]) {
-    const el = document.getElementById(id);
+  const currentMin = preserveValues ? +slMin.value : minA;
+  const currentMax = preserveValues ? +slMax.value : maxA;
+
+  for (const [id, el, val] of [["slMin", slMin, currentMin], ["slMax", slMax, currentMax]]) {
     el.min = minA; el.max = maxA; el.value = val;
   }
-  document.getElementById("anoMin").textContent = minA;
-  document.getElementById("anoMax").textContent = maxA;
+  document.getElementById("anoMin").textContent = currentMin;
+  document.getElementById("anoMax").textContent = currentMax;
 
-  document.getElementById("slMin").addEventListener("input", () => {
-    if (+slMin.value > +slMax.value) slMin.value = slMax.value;
-    document.getElementById("anoMin").textContent = slMin.value;
+  // Remove existing listeners by cloning (to prevent duplicates if called twice)
+  const newSlMin = slMin.cloneNode(true);
+  const newSlMax = slMax.cloneNode(true);
+  slMin.parentNode.replaceChild(newSlMin, slMin);
+  slMax.parentNode.replaceChild(newSlMax, slMax);
+
+  newSlMin.addEventListener("input", () => {
+    if (+newSlMin.value > +newSlMax.value) newSlMin.value = newSlMax.value;
+    document.getElementById("anoMin").textContent = newSlMin.value;
     applyFilters();
   });
-  document.getElementById("slMax").addEventListener("input", () => {
-    if (+slMax.value < +slMin.value) slMax.value = slMin.value;
-    document.getElementById("anoMax").textContent = slMax.value;
+  newSlMax.addEventListener("input", () => {
+    if (+newSlMax.value < +newSlMin.value) newSlMax.value = newSlMin.value;
+    document.getElementById("anoMax").textContent = newSlMax.value;
     applyFilters();
   });
 
@@ -789,6 +801,56 @@ async function updateAll() {
     await updateAll();
     b.textContent = "🔄 Atualizar dados"; b.disabled = false;
   });
+
+  const btnHistory = document.getElementById("btnHistory");
+  if (btnHistory) {
+    btnHistory.addEventListener("click", async () => {
+      btnHistory.textContent = "⏳ Iniciando download...";
+      btnHistory.disabled = true;
+      document.getElementById("btnRefresh").disabled = true;
+
+      // Chama a tela de carregamento
+      loader.style.display = "flex"; 
+      loader.style.opacity = "1";
+      setLoaderProgress(0);
+
+      // Dispara o download em background no proxy
+      try {
+        await fetch(`http://${HOST}:8888/fetch-history`, { method: "GET" }).catch(() => {});
+        await new Promise(r => setTimeout(r, 1000));
+        
+        // Polling para os anos históricos
+        await waitForCache(false);
+
+        // Terminou o cache histórico. Traz o arquivo resultante gigante!
+        setLoaderMsg("✅ Arquivo histórico baixado, renderizando interface...");
+        const url  = `http://${HOST}:8888/full-data`;
+        const resp = await fetch(url, { headers: { Accept: "application/json" } });
+        const json = await resp.json();
+        
+        totalBase = json.total || json.count || 0;
+        allData   = (json.results || []).map(mapDoc);
+
+        filtered = allData.filter(d => d.ano_deposito);
+        buildFilters(false); // reseta os filtros para abranger tudo
+        await updateAll();
+        
+        loader.style.opacity = "0";
+        setTimeout(() => loader.style.display = "none", 500);
+        
+        btnHistory.textContent = "✅ Histórico completo carregado";
+        btnHistory.style.display = "none"; // Hide button once fetched
+        document.getElementById("btnRefresh").disabled = false;
+
+      } catch(e) {
+        alert("Erro ao buscar histórico: " + e.message);
+        btnHistory.textContent = "📚 Tentar novamente";
+        btnHistory.disabled = false;
+        loader.style.opacity = "0";
+        setTimeout(() => loader.style.display = "none", 500);
+      }
+    });
+  }
 })();
 </script>
 </body>

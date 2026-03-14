@@ -23,9 +23,9 @@ TARGET     = "http://pi-api-dev.ibict.br"
 PORT       = 8888
 TIMEOUT    = 60
 BATCH      = 100
-YEARS      = list(range(1990, 2026))
+YEARS_RECENT = list(range(2021, 2026))
+YEARS_HISTORIC = list(range(1990, 2021)) # 1990 to 2020
 CACHE_FILE = "ibict_cache.json"
-TOTAL_YEARS = len(YEARS)
 
 # ── Estado global do cache ─────────────────────────────────────────────────────
 _cache_lock    = threading.Lock()
@@ -49,6 +49,16 @@ def set_cache_state(ready, progress, message, body=None):
 def get_cache_state():
     with _cache_lock:
         return _cache_ready, _cache_progress, _cache_message, _cache_body
+
+
+def _load_cache_if_exists():
+    if os.path.exists(CACHE_FILE):
+        try:
+            with open(CACHE_FILE, "rb") as f:
+                return json.loads(f.read().decode("utf-8"))
+        except Exception as e:
+            print(f"[cache] Erro ao ler cache existente: {e}")
+    return {"total": 0, "results": []}
 
 
 # ── Fetch helper ───────────────────────────────────────────────────────────────
@@ -76,27 +86,36 @@ def fetch_json(path, retries=3):
 
 
 # ── Background: pré-aquece o cache ────────────────────────────────────────────
-def _prewarm_cache():
-    """Roda em background thread ao iniciar o proxy."""
-    # Se já existe cache salvo, carrega direto
-    if os.path.exists(CACHE_FILE):
-        try:
-            with open(CACHE_FILE, "rb") as f:
-                body = f.read()
-            set_cache_state(True, 1.0, "✅ Cache carregado do disco.", body)
-            print(f"[cache] Cache existente carregado ({len(body):,} bytes).")
-            return
-        except Exception as e:
-            print(f"[cache] Erro ao ler cache existente: {e}. Reconstruindo…")
+def _prewarm_cache(years_to_fetch, is_history=False):
+    """Roda em background thread para buscar anos específicos."""
+    print(f"[cache] Iniciando coleta para os anos: {years_to_fetch[0]} a {years_to_fetch[-1]}…")
+    
+    # Carrega dados existentes para append, se for histórico.
+    # Se não for history, tentamos ler do disco primeiro para skip.
+    existing_data = {"total": 0, "results": []}
+    
+    if is_history:
+        existing_data = _load_cache_if_exists()
+    else:
+        # Se for prewarm inicial (recentes), e o arquivo já existe e tem o mesmo tamanho de anos?
+        # Para ser seguro, se o arquivo existe e o is_history for falso, apenas retorna o cache existente.
+        if os.path.exists(CACHE_FILE):
+            data = _load_cache_if_exists()
+            if data and data.get("total", 0) > 0:
+                body = json.dumps(data, ensure_ascii=False).encode("utf-8")
+                set_cache_state(True, 1.0, "✅ Cache carregado do disco.", body)
+                print(f"[cache] Cache existente carregado ({data['total']} registros).")
+                return
 
-    print("[cache] Iniciando coleta completa em background…")
-    all_records = []
+    all_records = existing_data.get("results", [])
+    total_years = len(years_to_fetch)
 
-    for idx, year in enumerate(YEARS):
-        progress = idx / TOTAL_YEARS
-        msg = f"Coletando ano {year}… ({idx + 1}/{TOTAL_YEARS} anos)"
+    for idx, year in enumerate(years_to_fetch):
+        progress = idx / total_years
+        msg_prefix = "Histórico: " if is_history else "Recente: "
+        msg = f"{msg_prefix}Coletando ano {year}… ({idx + 1}/{total_years} anos)"
         set_cache_state(False, progress, msg)
-        print(f"  [ano={year}] ", end="", flush=True)
+        print(f"  [{msg_prefix}ano={year}] ", end="", flush=True)
 
         offset     = 0
         year_count = 0
@@ -111,10 +130,10 @@ def _prewarm_cache():
             if not batch:
                 break
                 
-            # Anti-infinite loop: check if API ignored offset and returned the exact same page
+            # Anti-infinite loop
             current_batch_str = json.dumps(batch, sort_keys=True)
             if current_batch_str == last_batch_str:
-                print(f"  [ano={year}] API retornou registros duplicados no offset {offset} (paginação falhou). Ignorando o resto.")
+                print(f"  [{year}] API duplicou offset {offset}. Fim deste ano.")
                 break
             last_batch_str = current_batch_str
 
@@ -129,23 +148,25 @@ def _prewarm_cache():
     result     = {"total": total, "results": all_records}
     body_bytes = json.dumps(result, ensure_ascii=False).encode("utf-8")
 
-    # Salva em disco
+    # Salva/Sobrescreve no disco
     try:
         with open(CACHE_FILE, "wb") as f:
             f.write(body_bytes)
-        print(f"[cache] ✅ Pronto! {total} registros salvos em {CACHE_FILE}.")
+        print(f"[cache] ✅ Pronto! {total} registros totais salvos.")
     except Exception as e:
         print(f"[cache] Erro ao salvar cache: {e}")
 
-    set_cache_state(True, 1.0, f"✅ Coleta concluída! {total:,} patentes.", body_bytes)
+    set_cache_state(True, 1.0, f"✅ Coleta concluída! {total:,} registros.", body_bytes)
 
 
-def start_prewarm():
+def start_prewarm(force_years=None, is_history=False):
     global _prewarm_thread
     if _prewarm_thread and _prewarm_thread.is_alive():
         print("[cache] O pré-aquecimento já está em andamento. Ignorando.")
         return
-    _prewarm_thread = threading.Thread(target=_prewarm_cache, daemon=True, name="CachePrewarm")
+        
+    years = force_years if force_years else YEARS_RECENT
+    _prewarm_thread = threading.Thread(target=_prewarm_cache, args=(years, is_history), daemon=True, name="CachePrewarm")
     _prewarm_thread.start()
 
 
@@ -165,6 +186,8 @@ class ProxyHandler(BaseHTTPRequestHandler):
             self._handle_cache_status()
         elif self.path.startswith("/full-data"):
             self._handle_full_data()
+        elif self.path.startswith("/fetch-history"):
+            self._handle_fetch_history()
         else:
             self._proxy_pass()
 
@@ -191,23 +214,22 @@ class ProxyHandler(BaseHTTPRequestHandler):
         force_refresh = "true" in qs.get("refresh", [])
 
         if force_refresh:
-            # Apaga cache e reinicia a coleta em background
             if os.path.exists(CACHE_FILE):
                 try:
                     os.remove(CACHE_FILE)
                 except Exception:
                     pass
-            set_cache_state(False, 0.0, "Reiniciando coleta…")
-            start_prewarm()
+            set_cache_state(False, 0.0, "Reiniciando pesquisa recente (2021-2025)…")
+            start_prewarm(force_years=YEARS_RECENT, is_history=False)
 
-        # Aguarda até o cache estar pronto (polling interno)
+        # Aguarda até cache pronto
         wait_msg_printed = False
         while True:
             ready, progress, message, body = get_cache_state()
             if ready and body:
                 break
             if not wait_msg_printed:
-                print("[full-data] Cache ainda sendo gerado, aguardando…")
+                print("[full-data] Aguardando cache principal...")
                 wait_msg_printed = True
             time.sleep(2)
 
@@ -217,6 +239,21 @@ class ProxyHandler(BaseHTTPRequestHandler):
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()
         self.wfile.write(body)
+
+    # ── GET /fetch-history ──────────────────────────────────────────────────────
+    def _handle_fetch_history(self):
+        # Dispara a busca do histórico (ex: 1990-2020) em background.
+        set_cache_state(False, 0.0, "Iniciando carga histórica (1990-2020)…")
+        start_prewarm(force_years=YEARS_HISTORIC, is_history=True)
+
+        payload = json.dumps({"status": "started"}).encode("utf-8")
+        self.send_response(200)
+        self._cors()
+        self.send_header("Content-Type",   "application/json; charset=utf-8")
+        self.send_header("Content-Length", str(len(payload)))
+        self.end_headers()
+        self.wfile.write(payload)
+
 
     # ── passthrough ────────────────────────────────────────────────────────────
     def _proxy_pass(self):
