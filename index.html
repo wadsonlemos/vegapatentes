@@ -45,16 +45,30 @@
       background: var(--bg);
       display: flex; flex-direction: column; align-items: center; justify-content: center;
       gap: 18px; transition: opacity .5s;
+      padding: 0 24px;
     }
-    .ring {
-      width: 52px; height: 52px;
-      border: 4px solid var(--border);
-      border-top-color: var(--accent);
-      border-radius: 50%;
-      animation: spin .85s linear infinite;
+    .loader-logo { font-size: 2.4rem; animation: pulse 2s ease-in-out infinite; }
+    @keyframes pulse { 0%,100%{ opacity:1; transform:scale(1); } 50%{ opacity:.7; transform:scale(1.07); } }
+    .loader-title { font-size: 1.1rem; font-weight: 700; color: var(--text); }
+    #loader-msg { color: var(--muted); font-size: .85rem; letter-spacing: .03em; text-align:center; max-width:420px; min-height:1.2em; }
+    .progress-track {
+      width: min(420px, 90vw); height: 6px;
+      background: var(--border); border-radius: 99px; overflow: hidden;
     }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    #loader p { color: var(--muted); font-size: .88rem; letter-spacing: .04em; }
+    .progress-fill {
+      height: 100%; width: 0%; border-radius: 99px;
+      background: linear-gradient(90deg, var(--accent), var(--accent4));
+      transition: width .6s ease;
+      position: relative;
+    }
+    .progress-fill::after {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,.25) 50%, transparent 100%);
+      animation: shimmer 1.6s linear infinite;
+      background-size: 200% 100%;
+    }
+    @keyframes shimmer { 0%{ background-position:200% 0; } 100%{ background-position:-200% 0; } }
+    #loader-pct { font-size: .75rem; color: var(--muted); font-variant-numeric: tabular-nums; }
 
     /* ── LAYOUT ── */
     .wrapper { display: flex; min-height: 100vh; }
@@ -196,7 +210,13 @@
 </head>
 <body>
 
-<div id="loader"><div class="ring"></div><p>Carregando dados do IBICT…</p></div>
+<div id="loader">
+  <div class="loader-logo">📊</div>
+  <div class="loader-title">Dashboard de Patentes BR</div>
+  <div class="progress-track"><div class="progress-fill" id="loader-bar"></div></div>
+  <div id="loader-pct">0%</div>
+  <div id="loader-msg">Iniciando…</div>
+</div>
 
 <div class="wrapper">
 
@@ -387,14 +407,59 @@ function mapDoc(d) {
   };
 }
 
-async function loadData(forceRefresh = false) {
-  setLoaderMsg("Conectando ao proxy — carregando dados…");
-  
+function setLoaderMsg(txt) {
+  const el = document.getElementById("loader-msg");
+  if (el) el.textContent = txt;
+}
+
+function setLoaderProgress(p) {
+  const pct = Math.round(p * 100);
+  const bar = document.getElementById("loader-bar");
+  const pctEl = document.getElementById("loader-pct");
+  if (bar)   bar.style.width = pct + "%";
+  if (pctEl) pctEl.textContent = pct + "%";
+}
+
+// Aguarda o cache ficar pronto fazendo polling de /cache-status
+async function waitForCache(forceRefresh = false) {
   if (forceRefresh) {
-    setLoaderMsg("⏳ Atualizando dados da API IBICT (isso pode levar alguns minutos)…");
+    setLoaderMsg("♻️ Solicitando atualização dos dados…");
+    await fetch(`http://${HOST}:8888/full-data?refresh=true`, { method: "GET" }).catch(() => {});
+    // Aguarda um momento para o proxy registrar o reinício
+    await new Promise(r => setTimeout(r, 1500));
   }
 
-  const url = `http://${HOST}:8888/full-data${forceRefresh ? '?refresh=true' : ''}`;
+  while (true) {
+    try {
+      const resp = await fetch(`http://${HOST}:8888/cache-status`);
+      if (resp.ok) {
+        const s = await resp.json();
+        setLoaderMsg(s.message || "Coletando dados…");
+        setLoaderProgress(s.progress || 0);
+        if (s.ready) break;
+      }
+    } catch (e) {
+      setLoaderMsg("Aguardando proxy…");
+    }
+    await new Promise(r => setTimeout(r, 2000));
+  }
+  setLoaderProgress(1.0);
+  setLoaderMsg("✅ Dados prontos! Carregando dashboard…");
+}
+
+async function loadData(forceRefresh = false) {
+  if (forceRefresh) {
+    // Mostra loader novamente
+    const loader = document.getElementById("loader");
+    loader.style.display = "flex"; loader.style.opacity = "1";
+    setLoaderProgress(0);
+  }
+
+  // Espera o cache estar disponível antes de buscar
+  await waitForCache(forceRefresh);
+
+  setLoaderMsg("Baixando dados do cache…");
+  const url  = `http://${HOST}:8888/full-data`;
   const resp = await fetch(url, { headers: { Accept: "application/json" } });
 
   if (!resp.ok) throw new Error(`HTTP ${resp.status} — ${resp.statusText}`);
@@ -404,11 +469,6 @@ async function loadData(forceRefresh = false) {
 
   totalBase = json.total || json.count || 0;
   allData   = (json.results || []).map(mapDoc);
-}
-
-function setLoaderMsg(txt) {
-  const el = document.querySelector("#loader p");
-  if (el) el.textContent = txt;
 }
 
 // ── BUILD FILTERS ─────────────────────────────────────────────────────────────
