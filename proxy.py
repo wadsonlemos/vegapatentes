@@ -182,6 +182,12 @@ class ProxyHandler(BaseHTTPRequestHandler):
         self.end_headers()
 
     def do_GET(self):
+        # ── Bloqueia bots da AWS procurando credenciais (evita sujar o log) ──
+        if "169.254.169.254" in self.path or "meta-data" in self.path:
+            self.send_response(404)
+            self.end_headers()
+            return
+
         if self.path == "/cache-status":
             self._handle_cache_status()
         elif self.path.startswith("/full-data"):
