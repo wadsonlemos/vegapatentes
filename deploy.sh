@@ -35,6 +35,6 @@ echo "✅ Dashboard iniciado na porta 8080"
 
 echo ""
 echo "✨ Deploy concluído!"
-echo "   Dashboard: http://18.206.184.9:8080"
+echo "   Dashboard: http://54.91.227.9:8080"
 echo "   Status cache: curl http://localhost:8888/cache-status"
 echo "   Logs proxy: tail -f proxy.log"
