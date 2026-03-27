@@ -6,10 +6,8 @@
   <title>Dashboard de Patentes BR — IBICT</title>
   <meta name="description" content="Dashboard interativo de patentes brasileiras com dados do IBICT usando Vega-Lite." />
 
-  <!-- Vega stack -->
+  <!-- Vega puro (sem Vega-Lite / vega-embed) -->
   <script src="https://cdn.jsdelivr.net/npm/vega@5.30.0/build/vega.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/vega-lite@5.21.0/build/vega-lite.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/vega-embed@6.26.0/build/vega-embed.min.js"></script>
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -328,44 +326,51 @@
       </div>
     </div>
 
-    <footer>Dashboard com Vega-Lite (vega-embed) | Dados: IBICT — pi-api-dev.ibict.br</footer>
+    <footer>Dashboard com Vega (puro) | Dados: IBICT — pi-api-dev.ibict.br</footer>
   </main>
 </div>
 
 <script>
 // ── CONFIG ────────────────────────────────────────────────────────────────────
-// Detecta se está local ou na EC2
-const HOST = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" 
-             ? "localhost" 
+const HOST = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
+             ? "localhost"
              : "18.206.184.9";
 
 const API_BASE  = `http://${HOST}:8888/api/v1/patente`;
 const BATCH     = 100;
 const PAGE_SIZE = 20;
 
-// Common Vega-Lite config (dark theme matching the page)
-const VEGA_CFG = {
-  background: "#161b22",
-  font: "Inter, sans-serif",
-  axis: {
-    gridColor: "#30363d", domainColor: "#30363d",
-    labelColor: "#8b949e", titleColor: "#8b949e",
-    tickColor: "#30363d"
-  },
-  legend: { labelColor: "#8b949e", titleColor: "#8b949e" },
-  title:  { color: "#e6edf3" },
-  view:   { stroke: "transparent" }
-};
+// ── Tema dark para Vega puro ──────────────────────────────────────────────────
+const BG      = "#161b22";
+const MUTED   = "#8b949e";
+const TEXT    = "#e6edf3";
+const GRID    = "#30363d";
+const FONT    = "Inter, sans-serif";
+const PALETTE = ["#58a6ff","#3fb950","#f78166","#d2a8ff","#ffa657","#79c0ff","#56d364","#ff7b72","#e3b341","#db61a2"];
 
-const EMBED_OPT = {
-  actions: { export: true, source: false, compiled: false, editor: false },
-  theme: "dark",
-  config: VEGA_CFG
-};
+function axisStyle(orient, extra = {}) {
+  return {
+    orient, scale: extra.scale || (orient === "bottom" || orient === "top" ? "xscale" : "yscale"),
+    labelColor: MUTED, titleColor: MUTED,
+    domainColor: GRID, tickColor: GRID,
+    gridColor: GRID, grid: true,
+    labelFont: FONT, titleFont: FONT,
+    ...extra
+  };
+}
+
+function legendStyle(fill, title, orient = "right") {
+  return { fill, title, orient, titleColor: MUTED, labelColor: TEXT, titleFont: FONT, labelFont: FONT };
+}
+
+function containerWidth(id) {
+  const el = document.getElementById(id);
+  return el ? Math.max((el.clientWidth || 820) - 44, 400) : 820;
+}
 
 // ── STATE ─────────────────────────────────────────────────────────────────────
 let allData = [], totalBase = 0, filtered = [], page = 1;
-let views = {}; // vega views keyed by element id
+let views = {}; // vega.View keyed by element id
 
 // ── UTILS ─────────────────────────────────────────────────────────────────────
 const fmt = n => n.toLocaleString("pt-BR");
@@ -548,110 +553,186 @@ function updateMetrics() {
     `Fonte: IBICT — pi-api-dev.ibict.br | ${fmt(totalBase)} registros na base`;
 }
 
-// ── VEGA-LITE HELPERS ─────────────────────────────────────────────────────────
-async function renderSpec(id, spec) {
+// ── VEGA PURO — renderizador ──────────────────────────────────────────────────
+function renderSpec(id, spec) {
   if (views[id]) { views[id].finalize(); delete views[id]; }
-  const result = await vegaEmbed(`#${id}`, spec, EMBED_OPT);
-  views[id] = result.view;
+  spec.background = BG;
+  spec.padding    = spec.padding ?? { left: 60, right: 20, top: 10, bottom: 50 };
+  spec.width      = containerWidth(id);
+  const view = new vega.View(vega.parse(spec), {
+    renderer: "svg",
+    container: `#${id}`,
+    hover: true,
+  });
+  view.run();
+  views[id] = view;
+  return Promise.resolve();
 }
 
-// ── CHART 1: Stacked Bar por Ano ──────────────────────────────────────────────
+// ── CHART 1: Stacked Bar por Ano (Vega puro) ─────────────────────────────────
 function buildVg1() {
-  const rows = [];
+  // Agrega em JS: [{ano, status, count}]
+  const agg = {};
   for (const d of filtered) {
     if (!d.ano_deposito) continue;
-    rows.push({ ano: String(d.ano_deposito), status: d.status });
+    const k = `${d.ano_deposito}||${d.status}`;
+    agg[k] = (agg[k] || { ano: String(d.ano_deposito), status: d.status, count: 0 });
+    agg[k].count++;
   }
+  const rows = Object.values(agg);
+  const anos    = [...new Set(rows.map(r => r.ano))].sort();
+  const statuses = [...new Set(rows.map(r => r.status))];
+
   const spec = {
-    $schema: "https://vega.github.io/schema/vega-lite/v5.json",
-    width: "container", height: 360,
-    data: { values: rows },
-    mark: { type: "bar", tooltip: true },
-    encoding: {
-      x: { field: "ano", type: "ordinal", title: "Ano de Depósito",
-           axis: { labelAngle: -45 } },
-      y: { aggregate: "count", title: "Número de Patentes" },
-      color: { field: "status", type: "nominal", title: "Status",
-               scale: { scheme: "tableau10" } },
-      tooltip: [
-        { field: "ano", title: "Ano" },
-        { field: "status", title: "Status" },
-        { aggregate: "count", title: "Patentes" }
-      ]
-    }
+    "$schema": "https://vega.github.io/schema/vega/v5.json",
+    "height": 360,
+    "data": [
+      { "name": "table", "values": rows,
+        "transform": [
+          { "type": "stack", "groupby": ["ano"], "field": "count", "sort": {"field": "status"}, "as": ["y0","y1"] }
+        ]
+      }
+    ],
+    "scales": [
+      { "name": "xscale", "type": "band", "domain": anos, "range": "width", "paddingInner": 0.15, "paddingOuter": 0.05 },
+      { "name": "yscale", "type": "linear", "domain": {"data": "table", "field": "y1"}, "nice": true, "range": "height" },
+      { "name": "color",  "type": "ordinal", "domain": statuses, "range": PALETTE }
+    ],
+    "axes": [
+      { "orient": "bottom", "scale": "xscale", "labelColor": MUTED, "domainColor": GRID, "tickColor": GRID, "labelFont": FONT, "labelAngle": -40, "labelAlign": "right", "title": "Ano de Depósito", "titleColor": MUTED, "titleFont": FONT },
+      { "orient": "left",   "scale": "yscale", "labelColor": MUTED, "domainColor": GRID, "tickColor": GRID, "labelFont": FONT, "grid": true, "gridColor": GRID, "title": "Número de Patentes", "titleColor": MUTED, "titleFont": FONT }
+    ],
+    "legends": [ legendStyle("color", "Status") ],
+    "marks": [{
+      "type": "rect",
+      "from": {"data": "table"},
+      "encode": {
+        "enter": {
+          "x": {"scale": "xscale", "field": "ano"},
+          "width": {"scale": "xscale", "band": 1},
+          "y": {"scale": "yscale", "field": "y0"},
+          "y2": {"scale": "yscale", "field": "y1"},
+          "fill": {"scale": "color", "field": "status"},
+          "tooltip": {"signal": "{'Ano': datum.ano, 'Status': datum.status, 'Patentes': datum.count}"}
+        },
+        "hover": {"fillOpacity": {"value": 0.75}},
+        "update": {"fillOpacity": {"value": 1}}
+      }
+    }]
   };
   return renderSpec("vg1", spec);
 }
 
-// ── CHART 2: Grouped Bar CPC vs IPC ──────────────────────────────────────────
+// ── CHART 2: Grouped Bar CPC vs IPC (Vega puro) ───────────────────────────────
 function buildVg2() {
   const cpcC = counter(filtered.flatMap(d => d.cpc));
   const ipcC = counter(filtered.flatMap(d => d.ipc));
-  const top10 = topN(cpcC, 10).map(([k]) => k);
+  const top10codes = topN(cpcC, 10).map(([k]) => k);
   const rows = [
-    ...top10.map(k => ({ codigo: k, sistema: "CPC", count: cpcC[k] || 0 })),
-    ...top10.map(k => ({ codigo: k, sistema: "IPC", count: ipcC[k] || 0 })),
+    ...top10codes.map(k => ({ codigo: k, sistema: "CPC", count: cpcC[k] || 0 })),
+    ...top10codes.map(k => ({ codigo: k, sistema: "IPC", count: ipcC[k] || 0 })),
   ];
+  const maxCount = Math.max(...rows.map(r => r.count));
+  const bandH = 28;
+
   const spec = {
-    $schema: "https://vega.github.io/schema/vega-lite/v5.json",
-    width: "container", height: 420,
-    data: { values: rows },
-    mark: { type: "bar", tooltip: true },
-    encoding: {
-      x: { field: "count", type: "quantitative", title: "Número de Patentes" },
-      y: { field: "codigo", type: "nominal", sort: "-x", title: "Classificação" },
-      yOffset: { field: "sistema", type: "nominal" },
-      color: {
-        field: "sistema", type: "nominal", title: "Sistema",
-        scale: { domain: ["CPC","IPC"], range: ["#4c78a8","#f58518"] }
-      },
-      tooltip: [
-        { field: "codigo", title: "Código" },
-        { field: "sistema", title: "Sistema" },
-        { field: "count", title: "Patentes" }
-      ]
-    }
+    "$schema": "https://vega.github.io/schema/vega/v5.json",
+    "height": top10codes.length * bandH * 2 + 20,
+    "padding": {"left": 160, "right": 20, "top": 10, "bottom": 40},
+    "data": [{"name": "table", "values": rows}],
+    "scales": [
+      { "name": "xscale", "type": "linear", "domain": [0, maxCount], "range": "width", "nice": true },
+      { "name": "yscale", "type": "band", "domain": top10codes, "range": "height", "paddingInner": 0.2, "paddingOuter": 0.05 },
+      { "name": "yoffset", "type": "band", "domain": ["CPC","IPC"], "range": {"signal": "[0, bandwidth('yscale')]"} },
+      { "name": "color", "type": "ordinal", "domain": ["CPC","IPC"], "range": ["#58a6ff","#ffa657"] }
+    ],
+    "axes": [
+      { "orient": "bottom", "scale": "xscale", "labelColor": MUTED, "domainColor": GRID, "tickColor": GRID, "labelFont": FONT, "grid": true, "gridColor": GRID, "title": "Número de Patentes", "titleColor": MUTED, "titleFont": FONT },
+      { "orient": "left",   "scale": "yscale", "labelColor": TEXT,  "domainColor": GRID, "tickColor": GRID, "labelFont": FONT, "title": "Classificação", "titleColor": MUTED, "titleFont": FONT }
+    ],
+    "legends": [ legendStyle("color", "Sistema") ],
+    "marks": [{
+      "type": "rect",
+      "from": {"data": "table"},
+      "encode": {
+        "enter": {
+          "x": {"value": 0},
+          "x2": {"scale": "xscale", "field": "count"},
+          "y": {"signal": "scale('yscale', datum.codigo) + scale('yoffset', datum.sistema)"},
+          "height": {"signal": "bandwidth('yoffset') - 2"},
+          "fill": {"scale": "color", "field": "sistema"},
+          "cornerRadiusTopRight":    {"value": 3},
+          "cornerRadiusBottomRight": {"value": 3},
+          "tooltip": {"signal": "{'Código': datum.codigo, 'Sistema': datum.sistema, 'Patentes': datum.count}"}
+        },
+        "hover": {"fillOpacity": {"value": 0.75}},
+        "update": {"fillOpacity": {"value": 1}}
+      }
+    }]
   };
   return renderSpec("vg2", spec);
 }
 
-// ── CHART 3: 100% Normalized Stacked ─────────────────────────────────────────
+// ── CHART 3: 100% Normalized Stacked (Vega puro) ─────────────────────────────
 function buildVg3() {
-  const rows = [];
+  const agg = {};
   for (const d of filtered) {
     if (!d.ano_deposito) continue;
-    rows.push({ ano: String(d.ano_deposito), status: d.status });
+    const k = `${d.ano_deposito}||${d.status}`;
+    agg[k] = agg[k] || { ano: String(d.ano_deposito), status: d.status, count: 0 };
+    agg[k].count++;
   }
+  const rows = Object.values(agg);
+  const anos    = [...new Set(rows.map(r => r.ano))].sort();
+  const statuses = [...new Set(rows.map(r => r.status))];
+
   const spec = {
-    $schema: "https://vega.github.io/schema/vega-lite/v5.json",
-    width: "container", height: 340,
-    data: { values: rows },
-    mark: { type: "bar", tooltip: true },
-    encoding: {
-      x: { field: "ano", type: "ordinal", title: "Ano de Depósito",
-           axis: { labelAngle: -45 } },
-      y: { aggregate: "count", stack: "normalize", title: "Proporção (%)",
-           axis: { format: "%" } },
-      color: { field: "status", type: "nominal", title: "Status",
-               scale: { scheme: "tableau10" } },
-      tooltip: [
-        { field: "ano", title: "Ano" },
-        { field: "status", title: "Status" },
-        { aggregate: "count", title: "Patentes" }
-      ]
-    }
+    "$schema": "https://vega.github.io/schema/vega/v5.json",
+    "height": 340,
+    "data": [
+      { "name": "table", "values": rows,
+        "transform": [
+          { "type": "stack", "groupby": ["ano"], "field": "count", "offset": "normalize", "sort": {"field": "status"}, "as": ["y0","y1"] }
+        ]
+      }
+    ],
+    "scales": [
+      { "name": "xscale", "type": "band", "domain": anos, "range": "width", "paddingInner": 0.15, "paddingOuter": 0.05 },
+      { "name": "yscale", "type": "linear", "domain": [0,1], "range": "height" },
+      { "name": "color",  "type": "ordinal", "domain": statuses, "range": PALETTE }
+    ],
+    "axes": [
+      { "orient": "bottom", "scale": "xscale", "labelColor": MUTED, "domainColor": GRID, "tickColor": GRID, "labelFont": FONT, "labelAngle": -40, "labelAlign": "right", "title": "Ano de Depósito", "titleColor": MUTED, "titleFont": FONT },
+      { "orient": "left",   "scale": "yscale", "labelColor": MUTED, "domainColor": GRID, "tickColor": GRID, "labelFont": FONT, "grid": true, "gridColor": GRID, "format": ".0%", "title": "Proporção (%)", "titleColor": MUTED, "titleFont": FONT }
+    ],
+    "legends": [ legendStyle("color", "Status") ],
+    "marks": [{
+      "type": "rect",
+      "from": {"data": "table"},
+      "encode": {
+        "enter": {
+          "x": {"scale": "xscale", "field": "ano"},
+          "width": {"scale": "xscale", "band": 1},
+          "y": {"scale": "yscale", "field": "y0"},
+          "y2": {"scale": "yscale", "field": "y1"},
+          "fill": {"scale": "color", "field": "status"},
+          "tooltip": {"signal": "{'Ano': datum.ano, 'Status': datum.status, 'Patentes': datum.count}"}
+        },
+        "hover": {"fillOpacity": {"value": 0.75}},
+        "update": {"fillOpacity": {"value": 1}}
+      }
+    }]
   };
   return renderSpec("vg3", spec);
 }
 
-// ── CHART 4: Gantt ────────────────────────────────────────────────────────────
+// ── CHART 4: Gantt (Vega puro) ────────────────────────────────────────────────
 function buildVg4() {
   const valid = filtered.filter(d =>
     d.ano_deposito && d.ano_concessao && d.ano_concessao >= d.ano_deposito
   );
   const byReq = {};
   for (const d of valid) {
-    // applicants já são strings após mapDoc
     const req = d.applicants[0] || "Desconhecido";
     if (!byReq[req]) byReq[req] = { min: Infinity, max: -Infinity, count: 0 };
     byReq[req].min = Math.min(byReq[req].min, d.ano_deposito);
@@ -661,81 +742,131 @@ function buildVg4() {
   const rows = Object.entries(byReq)
     .sort((a, b) => b[1].count - a[1].count)
     .slice(0, 15)
-    .sort((a, b) => a[1].min - b[1].min)
-    .map(([requerente, v]) => ({
-      requerente,
-      inicio: v.min,
-      fim:    v.max,
-      total:  v.count
-    }));
+    .map(([requerente, v]) => ({ requerente, inicio: v.min, fim: v.max, total: v.count }));
+
+  const reqs   = rows.map(r => r.requerente);
+  const allYrs = rows.flatMap(r => [r.inicio, r.fim]);
+  const minYr  = Math.min(...allYrs);
+  const maxYr  = Math.max(...allYrs);
+  const maxTot = Math.max(...rows.map(r => r.total));
 
   const spec = {
-    $schema: "https://vega.github.io/schema/vega-lite/v5.json",
-    width: "container", height: 420,
-    data: { values: rows },
-    mark: { type: "bar", tooltip: true, cornerRadiusEnd: 4 },
-    encoding: {
-      x:  { field: "inicio", type: "quantitative", title: "Ano",
-             scale: { zero: false } },
-      x2: { field: "fim" },
-      y:  { field: "requerente", type: "nominal", sort: "-x", title: "" },
-      color: {
-        field: "total", type: "quantitative", title: "Total de patentes",
-        scale: { scheme: "blues" }
-      },
-      tooltip: [
-        { field: "requerente", title: "Requerente" },
-        { field: "inicio", title: "Depósito" },
-        { field: "fim",    title: "Concessão" },
-        { field: "total",  title: "Patentes" }
-      ]
-    }
+    "$schema": "https://vega.github.io/schema/vega/v5.json",
+    "height": rows.length * 28 + 20,
+    "padding": {"left": 200, "right": 20, "top": 10, "bottom": 40},
+    "data": [{"name": "table", "values": rows}],
+    "scales": [
+      { "name": "xscale", "type": "linear", "domain": [minYr - 1, maxYr + 1], "range": "width", "nice": false },
+      { "name": "yscale", "type": "band",   "domain": reqs,  "range": "height", "paddingInner": 0.3, "paddingOuter": 0.1 },
+      { "name": "color",  "type": "linear", "domain": [0, maxTot], "range": ["#1e3a5f","#58a6ff"] }
+    ],
+    "axes": [
+      { "orient": "bottom", "scale": "xscale", "labelColor": MUTED, "domainColor": GRID, "tickColor": GRID, "labelFont": FONT, "grid": true, "gridColor": GRID, "format": "d", "title": "Ano", "titleColor": MUTED, "titleFont": FONT },
+      { "orient": "left",   "scale": "yscale", "labelColor": TEXT,  "domainColor": GRID, "tickColor": GRID, "labelFont": FONT }
+    ],
+    "legends": [{ "fill": "color", "title": "Total de patentes", "orient": "right", "titleColor": MUTED, "labelColor": TEXT, "titleFont": FONT, "labelFont": FONT, "type": "gradient" }],
+    "marks": [{
+      "type": "rect",
+      "from": {"data": "table"},
+      "encode": {
+        "enter": {
+          "x":  {"scale": "xscale", "field": "inicio"},
+          "x2": {"scale": "xscale", "field": "fim"},
+          "y":  {"scale": "yscale", "field": "requerente"},
+          "height": {"scale": "yscale", "band": 1},
+          "fill": {"scale": "color", "field": "total"},
+          "cornerRadiusTopRight":    {"value": 4},
+          "cornerRadiusBottomRight": {"value": 4},
+          "tooltip": {"signal": "{'Requerente': datum.requerente, 'Depósito': datum.inicio, 'Concessão': datum.fim, 'Patentes': datum.total}"}
+        },
+        "hover": {"fillOpacity": {"value": 0.75}},
+        "update": {"fillOpacity": {"value": 1}}
+      }
+    }]
   };
   return renderSpec("vg4", spec);
 }
 
-// ── CHART 5: Requerentes ──────────────────────────────────────────────────────
+// ── CHART 5: Requerentes (Vega puro) ─────────────────────────────────────────
 function buildVg5() {
-  // applicants já são strings após mapDoc
   const apps = topN(counter(filtered.flatMap(d => d.applicants)), 15)
     .map(([name, count]) => ({ name, count }));
+  const names = apps.map(r => r.name);
+  const maxC  = Math.max(...apps.map(r => r.count));
 
   const spec = {
-    $schema: "https://vega.github.io/schema/vega-lite/v5.json",
-    width: "container", height: 420,
-    data: { values: apps },
-    mark: { type: "bar", color: "#4c78a8", cornerRadiusEnd: 4, tooltip: true },
-    encoding: {
-      x: { field: "count", type: "quantitative", title: "Patentes" },
-      y: { field: "name",  type: "nominal", sort: "-x", title: "" },
-      tooltip: [
-        { field: "name",  title: "Requerente" },
-        { field: "count", title: "Patentes" }
-      ]
-    }
+    "$schema": "https://vega.github.io/schema/vega/v5.json",
+    "height": names.length * 28 + 20,
+    "padding": {"left": 200, "right": 20, "top": 10, "bottom": 40},
+    "data": [{"name": "table", "values": apps}],
+    "scales": [
+      { "name": "xscale", "type": "linear", "domain": [0, maxC], "range": "width", "nice": true },
+      { "name": "yscale", "type": "band",   "domain": names, "range": "height", "paddingInner": 0.25, "paddingOuter": 0.05 }
+    ],
+    "axes": [
+      { "orient": "bottom", "scale": "xscale", "labelColor": MUTED, "domainColor": GRID, "tickColor": GRID, "labelFont": FONT, "grid": true, "gridColor": GRID, "title": "Patentes", "titleColor": MUTED, "titleFont": FONT },
+      { "orient": "left",   "scale": "yscale", "labelColor": TEXT,  "domainColor": GRID, "tickColor": GRID, "labelFont": FONT }
+    ],
+    "marks": [{
+      "type": "rect",
+      "from": {"data": "table"},
+      "encode": {
+        "enter": {
+          "x": {"value": 0},
+          "x2": {"scale": "xscale", "field": "count"},
+          "y": {"scale": "yscale", "field": "name"},
+          "height": {"scale": "yscale", "band": 1},
+          "fill": {"value": "#58a6ff"},
+          "cornerRadiusTopRight":    {"value": 4},
+          "cornerRadiusBottomRight": {"value": 4},
+          "tooltip": {"signal": "{'Requerente': datum.name, 'Patentes': datum.count}"}
+        },
+        "hover": {"fill": {"value": "#79c0ff"}},
+        "update": {"fill": {"value": "#58a6ff"}}
+      }
+    }]
   };
   return renderSpec("vg5", spec);
 }
 
-// ── CHART 6: Inventores ───────────────────────────────────────────────────────
+// ── CHART 6: Inventores (Vega puro) ──────────────────────────────────────────
 function buildVg6() {
-  // inventors já são strings após mapDoc
   const invs = topN(counter(filtered.flatMap(d => d.inventors)), 15)
     .map(([name, count]) => ({ name, count }));
+  const names = invs.map(r => r.name);
+  const maxC  = Math.max(...invs.map(r => r.count));
 
   const spec = {
-    $schema: "https://vega.github.io/schema/vega-lite/v5.json",
-    width: "container", height: 420,
-    data: { values: invs },
-    mark: { type: "bar", color: "#3fb950", cornerRadiusEnd: 4, tooltip: true },
-    encoding: {
-      x: { field: "count", type: "quantitative", title: "Patentes" },
-      y: { field: "name",  type: "nominal", sort: "-x", title: "" },
-      tooltip: [
-        { field: "name",  title: "Inventor" },
-        { field: "count", title: "Patentes" }
-      ]
-    }
+    "$schema": "https://vega.github.io/schema/vega/v5.json",
+    "height": names.length * 28 + 20,
+    "padding": {"left": 200, "right": 20, "top": 10, "bottom": 40},
+    "data": [{"name": "table", "values": invs}],
+    "scales": [
+      { "name": "xscale", "type": "linear", "domain": [0, maxC], "range": "width", "nice": true },
+      { "name": "yscale", "type": "band",   "domain": names, "range": "height", "paddingInner": 0.25, "paddingOuter": 0.05 }
+    ],
+    "axes": [
+      { "orient": "bottom", "scale": "xscale", "labelColor": MUTED, "domainColor": GRID, "tickColor": GRID, "labelFont": FONT, "grid": true, "gridColor": GRID, "title": "Patentes", "titleColor": MUTED, "titleFont": FONT },
+      { "orient": "left",   "scale": "yscale", "labelColor": TEXT,  "domainColor": GRID, "tickColor": GRID, "labelFont": FONT }
+    ],
+    "marks": [{
+      "type": "rect",
+      "from": {"data": "table"},
+      "encode": {
+        "enter": {
+          "x": {"value": 0},
+          "x2": {"scale": "xscale", "field": "count"},
+          "y": {"scale": "yscale", "field": "name"},
+          "height": {"scale": "yscale", "band": 1},
+          "fill": {"value": "#3fb950"},
+          "cornerRadiusTopRight":    {"value": 4},
+          "cornerRadiusBottomRight": {"value": 4},
+          "tooltip": {"signal": "{'Inventor': datum.name, 'Patentes': datum.count}"}
+        },
+        "hover": {"fill": {"value": "#56d364"}},
+        "update": {"fill": {"value": "#3fb950"}}
+      }
+    }]
   };
   return renderSpec("vg6", spec);
 }

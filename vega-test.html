@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vega Puro — Teste de Patentes</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet" />
+
+  <!-- Apenas Vega puro (sem Vega-Lite nem vega-embed) -->
+  <script src="https://cdn.jsdelivr.net/npm/vega@5.30.0/build/vega.min.js"></script>
+
+  <style>
+    :root {
+      --bg:     #0d1117;
+      --bg2:    #161b22;
+      --border: #30363d;
+      --text:   #e6edf3;
+      --muted:  #8b949e;
+      --accent: #58a6ff;
+      --accent4:#d2a8ff;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg); color: var(--text);
+      min-height: 100vh; padding: 32px 40px;
+    }
+    h1 {
+      font-size: 1.6rem; font-weight: 800; letter-spacing: -.03em;
+      background: linear-gradient(90deg, var(--accent), var(--accent4));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      margin-bottom: 6px;
+    }
+    .subtitle { color: var(--muted); font-size: .85rem; margin-bottom: 36px; }
+    .section { margin-bottom: 40px; }
+    .section h2 { font-size: 1rem; font-weight: 700; margin-bottom: 4px; }
+    .section p  { font-size: .78rem; color: var(--muted); margin-bottom: 14px; }
+    .card {
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: 14px; padding: 22px;
+    }
+    .tag {
+      display: inline-block; background: rgba(88,166,255,.12); color: var(--accent);
+      border: 1px solid rgba(88,166,255,.25); border-radius: 6px;
+      font-size: .72rem; font-weight: 600; padding: 2px 10px; margin-bottom: 16px;
+    }
+  </style>
+</head>
+<body>
+
+<h1>🔬 Vega Puro — Teste</h1>
+<p class="subtitle">Renderizando specs Vega (sem Vega-Lite) com dados de patentes simulados</p>
+
+<!-- CHART 1: Bar Chart -->
+<div class="section">
+  <span class="tag">VEGA PURO</span>
+  <h2>📅 Patentes por Ano</h2>
+  <p>Bar chart com gradiente de cor por contagem, usando <code>scale</code> e <code>marks</code> do Vega.</p>
+  <div class="card">
+    <div id="chart1"></div>
+  </div>
+</div>
+
+<!-- CHART 2: Pie Chart -->
+<div class="section">
+  <span class="tag">VEGA PURO</span>
+  <h2>🥧 Distribuição por Status</h2>
+  <p>Pie chart com arcos (<code>arc</code>) e legenda personalizada — não existe no Vega-Lite de forma direta.</p>
+  <div class="card">
+    <div id="chart2"></div>
+  </div>
+</div>
+
+<!-- CHART 3: Scatter + Trend -->
+<div class="section">
+  <span class="tag">VEGA PURO</span>
+  <h2>🔵 Depósito × Concessão (Scatter)</h2>
+  <p>Scatter plot com tooltip interativo e linha de referência usando <code>rule</code> mark.</p>
+  <div class="card">
+    <div id="chart3"></div>
+  </div>
+</div>
+
+<script>
+// ── Dados simulados ──────────────────────────────────────────────────────────
+const anoData = [
+  {ano: "2010", count: 320}, {ano: "2011", count: 410}, {ano: "2012", count: 390},
+  {ano: "2013", count: 480}, {ano: "2014", count: 520}, {ano: "2015", count: 610},
+  {ano: "2016", count: 720}, {ano: "2017", count: 840}, {ano: "2018", count: 790},
+  {ano: "2019", count: 870}, {ano: "2020", count: 680}, {ano: "2021", count: 750},
+  {ano: "2022", count: 820}, {ano: "2023", count: 910},
+];
+
+const statusData = [
+  {status: "Concedida",  count: 4200},
+  {status: "Em Exame",   count: 3100},
+  {status: "Arquivada",  count: 1800},
+  {status: "Depositada", count: 2500},
+  {status: "Indeferida", count: 900},
+];
+
+const scatterData = Array.from({length: 60}, (_, i) => ({
+  deposito:  2000 + Math.floor(Math.random() * 20),
+  concessao: 2005 + Math.floor(Math.random() * 20),
+  tipo:      ["Invenção","Modelo de Utilidade","Certificado de Adição"][i % 3],
+  titulo:    `Patente exemplo ${i + 1}`,
+})).filter(d => d.concessao >= d.deposito);
+
+// ── Tema dark compartilhado ─────────────────────────────────────────────────
+const BG    = "#161b22";
+const MUTED = "#8b949e";
+const TEXT  = "#e6edf3";
+const GRID  = "#30363d";
+const W     = Math.min(window.innerWidth - 120, 900);
+
+// ── CHART 1: Bar chart (Vega puro) ──────────────────────────────────────────
+const spec1 = {
+  "$schema": "https://vega.github.io/schema/vega/v5.json",
+  "width": W, "height": 300,
+  "background": BG,
+  "padding": {"left": 50, "right": 20, "top": 10, "bottom": 50},
+
+  "data": [{ "name": "table", "values": anoData }],
+
+  "scales": [
+    {
+      "name": "xscale", "type": "band", "domain": {"data": "table", "field": "ano"},
+      "range": "width", "paddingInner": 0.2, "paddingOuter": 0.1
+    },
+    {
+      "name": "yscale", "domain": {"data": "table", "field": "count"},
+      "nice": true, "range": "height"
+    },
+    {
+      "name": "color", "type": "linear",
+      "domain": {"data": "table", "field": "count"},
+      "range": ["#1e3a5f", "#58a6ff"]
+    }
+  ],
+
+  "axes": [
+    {
+      "orient": "bottom", "scale": "xscale",
+      "labelColor": MUTED, "domainColor": GRID, "tickColor": GRID,
+      "labelAngle": -40, "labelAlign": "right", "labelFont": "Inter, sans-serif"
+    },
+    {
+      "orient": "left", "scale": "yscale",
+      "labelColor": MUTED, "domainColor": GRID, "tickColor": GRID,
+      "gridColor": GRID, "grid": true, "labelFont": "Inter, sans-serif"
+    }
+  ],
+
+  "marks": [
+    {
+      "type": "rect",
+      "from": {"data": "table"},
+      "encode": {
+        "enter": {
+          "x": {"scale": "xscale", "field": "ano"},
+          "width": {"scale": "xscale", "band": 1},
+          "y": {"scale": "yscale", "field": "count"},
+          "y2": {"scale": "yscale", "value": 0},
+          "fill": {"scale": "color", "field": "count"},
+          "cornerRadiusTopLeft": {"value": 4},
+          "cornerRadiusTopRight": {"value": 4},
+          "tooltip": {"signal": "{'Ano': datum.ano, 'Patentes': datum.count}"}
+        },
+        "hover": {"fillOpacity": {"value": 0.75}},
+        "update": {"fillOpacity": {"value": 1}}
+      }
+    }
+  ]
+};
+
+// ── CHART 2: Pie chart (Vega puro) ──────────────────────────────────────────
+const pieColors = ["#3fb950","#58a6ff","#f78166","#d2a8ff","#ffa657"];
+const spec2 = {
+  "$schema": "https://vega.github.io/schema/vega/v5.json",
+  "width": W, "height": 340,
+  "background": BG,
+  "padding": 20,
+
+  "data": [
+    {
+      "name": "table", "values": statusData,
+      "transform": [{"type": "pie", "field": "count"}]
+    }
+  ],
+
+  "scales": [
+    {
+      "name": "color", "type": "ordinal",
+      "domain": {"data": "table", "field": "status"},
+      "range": pieColors
+    }
+  ],
+
+  "legends": [
+    {
+      "fill": "color", "title": "Status", "orient": "right",
+      "titleColor": MUTED, "labelColor": TEXT,
+      "titleFont": "Inter, sans-serif", "labelFont": "Inter, sans-serif"
+    }
+  ],
+
+  "marks": [
+    {
+      "type": "arc",
+      "from": {"data": "table"},
+      "encode": {
+        "enter": {
+          "x": {"signal": "width / 2 - 60"},
+          "y": {"signal": "height / 2"},
+          "startAngle": {"field": "startAngle"},
+          "endAngle": {"field": "endAngle"},
+          "innerRadius": {"value": 80},
+          "outerRadius": {"value": 140},
+          "fill": {"scale": "color", "field": "status"},
+          "stroke": {"value": BG},
+          "strokeWidth": {"value": 2},
+          "tooltip": {"signal": "{'Status': datum.status, 'Patentes': datum.count}"}
+        },
+        "hover": {"outerRadius": {"value": 150}},
+        "update": {"outerRadius": {"value": 140}}
+      }
+    }
+  ]
+};
+
+// ── CHART 3: Scatter plot (Vega puro) ───────────────────────────────────────
+const typeColors = {"Invenção": "#58a6ff", "Modelo de Utilidade": "#3fb950", "Certificado de Adição": "#ffa657"};
+const spec3 = {
+  "$schema": "https://vega.github.io/schema/vega/v5.json",
+  "width": W, "height": 300,
+  "background": BG,
+  "padding": {"left": 55, "right": 20, "top": 10, "bottom": 50},
+
+  "data": [{ "name": "table", "values": scatterData }],
+
+  "scales": [
+    {
+      "name": "xscale", "type": "linear",
+      "domain": {"data": "table", "field": "deposito"},
+      "range": "width", "nice": true, "zero": false
+    },
+    {
+      "name": "yscale", "type": "linear",
+      "domain": {"data": "table", "field": "concessao"},
+      "range": "height", "nice": true, "zero": false
+    },
+    {
+      "name": "color", "type": "ordinal",
+      "domain": ["Invenção","Modelo de Utilidade","Certificado de Adição"],
+      "range": ["#58a6ff","#3fb950","#ffa657"]
+    }
+  ],
+
+  "axes": [
+    {
+      "orient": "bottom", "scale": "xscale", "title": "Ano de Depósito",
+      "labelColor": MUTED, "titleColor": MUTED, "domainColor": GRID, "tickColor": GRID,
+      "gridColor": GRID, "grid": true, "format": "d",
+      "labelFont": "Inter, sans-serif", "titleFont": "Inter, sans-serif"
+    },
+    {
+      "orient": "left", "scale": "yscale", "title": "Ano de Concessão",
+      "labelColor": MUTED, "titleColor": MUTED, "domainColor": GRID, "tickColor": GRID,
+      "gridColor": GRID, "grid": true, "format": "d",
+      "labelFont": "Inter, sans-serif", "titleFont": "Inter, sans-serif"
+    }
+  ],
+
+  "legends": [
+    {
+      "fill": "color", "title": "Tipo", "orient": "top-right",
+      "titleColor": MUTED, "labelColor": TEXT,
+      "titleFont": "Inter, sans-serif", "labelFont": "Inter, sans-serif"
+    }
+  ],
+
+  "marks": [
+    {
+      "type": "rule",
+      "encode": {
+        "enter": {
+          "x": {"value": 0}, "x2": {"signal": "width"},
+          "y": {"scale": "yscale", "signal": "domain('xscale')[0]"},
+          "y2": {"scale": "yscale", "signal": "domain('xscale')[1]"},
+          "stroke": {"value": "#f78166"}, "strokeDash": {"value": [6, 4]},
+          "strokeOpacity": {"value": 0.5}, "strokeWidth": {"value": 1}
+        }
+      }
+    },
+    {
+      "type": "symbol",
+      "from": {"data": "table"},
+      "encode": {
+        "enter": {
+          "x": {"scale": "xscale", "field": "deposito"},
+          "y": {"scale": "yscale", "field": "concessao"},
+          "fill": {"scale": "color", "field": "tipo"},
+          "size": {"value": 80},
+          "opacity": {"value": 0.8},
+          "tooltip": {
+            "signal": "{'Título': datum.titulo, 'Tipo': datum.tipo, 'Depósito': datum.deposito, 'Concessão': datum.concessao}"
+          }
+        },
+        "hover": {"size": {"value": 180}, "opacity": {"value": 1}},
+        "update": {"size": {"value": 80}, "opacity": {"value": 0.8}}
+      }
+    }
+  ]
+};
+
+// ── Renderiza os 3 gráficos ──────────────────────────────────────────────────
+[
+  ["chart1", spec1],
+  ["chart2", spec2],
+  ["chart3", spec3],
+].forEach(([id, spec]) => {
+  const view = new vega.View(vega.parse(spec), {
+    renderer: "svg",
+    container: `#${id}`,
+    hover: true,
+  });
+  view.run();
+});
+</script>
+</body>
+</html>
