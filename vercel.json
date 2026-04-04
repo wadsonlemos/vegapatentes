@@ -1,32 +1,7 @@
 {
-  "version": 2,
-  "builds": [
-    {
-      "src": "api/**/*.py",
-      "use": "@vercel/python"
-    },
-    {
-      "src": "index.html",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "ibict_summary.json",
-      "use": "@vercel/static"
-    }
-  ],
   "functions": {
     "api/**/*.py": {
       "includeFiles": "ibict_summary.json"
     }
-  },
-  "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "api/$1.py"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/$1"
-    }
-  ]
+  }
 }
