@@ -1,988 +1,1490 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Dashboard de Patentes BR — IBICT</title>
-  <meta name="description" content="Dashboard interativo de patentes brasileiras com dados do IBICT usando Vega-Lite." />
+  <meta name="description"
+    content="Dashboard interativo de patentes brasileiras com dados do IBICT usando Vega-Lite." />
 
   <!-- Vega puro (sem Vega-Lite / vega-embed) -->
   <script src="https://cdn.jsdelivr.net/npm/vega@5.30.0/build/vega.min.js"></script>
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet" />
 
   <style>
     :root {
-      --bg:     #0d1117;
-      --bg2:    #161b22;
-      --bg3:    #21262d;
+      --bg: #0d1117;
+      --bg2: #161b22;
+      --bg3: #21262d;
       --border: #30363d;
-      --text:   #e6edf3;
-      --muted:  #8b949e;
+      --text: #e6edf3;
+      --muted: #8b949e;
       --accent: #58a6ff;
-      --accent2:#f78166;
-      --accent3:#3fb950;
-      --accent4:#d2a8ff;
-      --accent5:#ffa657;
+      --accent2: #f78166;
+      --accent3: #3fb950;
+      --accent4: #d2a8ff;
+      --accent5: #ffa657;
       --r: 14px;
-      --sh: 0 4px 24px rgba(0,0,0,.45);
+      --sh: 0 4px 24px rgba(0, 0, 0, .45);
     }
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html { scroll-behavior: smooth; }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
     body {
       font-family: 'Inter', sans-serif;
-      background: var(--bg); color: var(--text);
-      min-height: 100vh; overflow-x: hidden;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
     }
 
     /* ── LOADER ── */
     #loader {
-      position: fixed; inset: 0; z-index: 9999;
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
       background: var(--bg);
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      gap: 18px; transition: opacity .5s;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 18px;
+      transition: opacity .5s;
       padding: 0 24px;
     }
-    .loader-logo { font-size: 2.4rem; animation: pulse 2s ease-in-out infinite; }
-    @keyframes pulse { 0%,100%{ opacity:1; transform:scale(1); } 50%{ opacity:.7; transform:scale(1.07); } }
-    .loader-title { font-size: 1.1rem; font-weight: 700; color: var(--text); }
-    #loader-msg { color: var(--muted); font-size: .85rem; letter-spacing: .03em; text-align:center; max-width:420px; min-height:1.2em; }
-    .progress-track {
-      width: min(420px, 90vw); height: 6px;
-      background: var(--border); border-radius: 99px; overflow: hidden;
+
+    .loader-logo {
+      font-size: 2.4rem;
+      animation: pulse 2s ease-in-out infinite;
     }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: 1;
+        transform: scale(1);
+      }
+
+      50% {
+        opacity: .7;
+        transform: scale(1.07);
+      }
+    }
+
+    .loader-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    #loader-msg {
+      color: var(--muted);
+      font-size: .85rem;
+      letter-spacing: .03em;
+      text-align: center;
+      max-width: 420px;
+      min-height: 1.2em;
+    }
+
+    .progress-track {
+      width: min(420px, 90vw);
+      height: 6px;
+      background: var(--border);
+      border-radius: 99px;
+      overflow: hidden;
+    }
+
     .progress-fill {
-      height: 100%; width: 0%; border-radius: 99px;
+      height: 100%;
+      width: 0%;
+      border-radius: 99px;
       background: linear-gradient(90deg, var(--accent), var(--accent4));
       transition: width .6s ease;
       position: relative;
     }
+
     .progress-fill::after {
-      content: ''; position: absolute; inset: 0;
-      background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,.25) 50%, transparent 100%);
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, .25) 50%, transparent 100%);
       animation: shimmer 1.6s linear infinite;
       background-size: 200% 100%;
     }
-    @keyframes shimmer { 0%{ background-position:200% 0; } 100%{ background-position:-200% 0; } }
-    #loader-pct { font-size: .75rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+    @keyframes shimmer {
+      0% {
+        background-position: 200% 0;
+      }
+
+      100% {
+        background-position: -200% 0;
+      }
+    }
+
+    #loader-pct {
+      font-size: .75rem;
+      color: var(--muted);
+      font-variant-numeric: tabular-nums;
+    }
 
     /* ── LAYOUT ── */
-    .wrapper { display: flex; min-height: 100vh; }
+    .wrapper {
+      display: flex;
+      min-height: 100vh;
+      background: var(--bg);
+    }
 
     /* ── SIDEBAR ── */
     #sidebar {
-      width: 272px; min-width: 272px;
-      background: var(--bg2); border-right: 1px solid var(--border);
+      width: 272px;
+      min-width: 272px;
+      background: var(--bg2);
+      border-right: 1px solid var(--border);
       padding: 26px 18px;
-      display: flex; flex-direction: column; gap: 26px;
-      position: sticky; top: 0; height: 100vh; overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 26px;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
     }
-    #sidebar::-webkit-scrollbar { width: 4px; }
-    #sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
 
-    .sidebar-logo { display: flex; align-items: center; gap: 10px; font-size: .95rem; font-weight: 700; }
-    .sidebar-logo .ico { font-size: 1.6rem; }
-    .sidebar-logo small { font-weight: 400; color: var(--muted); font-size: .7rem; display: block; }
+    #sidebar::-webkit-scrollbar {
+      width: 4px;
+    }
 
-    .filter-group { display: flex; flex-direction: column; gap: 9px; }
+    #sidebar::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 4px;
+    }
+
+    .sidebar-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: .95rem;
+      font-weight: 700;
+    }
+
+    .sidebar-logo .ico {
+      font-size: 1.6rem;
+    }
+
+    .sidebar-logo small {
+      font-weight: 400;
+      color: var(--muted);
+      font-size: .7rem;
+      display: block;
+    }
+
+    .filter-group {
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+    }
+
     .flabel {
-      font-size: .7rem; font-weight: 600; text-transform: uppercase;
-      letter-spacing: .08em; color: var(--muted);
+      font-size: .7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--muted);
     }
-    .range-row { display: flex; justify-content: space-between; font-size: .78rem; color: var(--accent); font-weight: 600; }
-    input[type="range"] { width: 100%; accent-color: var(--accent); cursor: pointer; }
 
-    .checks { display: flex; flex-direction: column; gap: 5px; max-height: 170px; overflow-y: auto; padding-right: 4px; }
-    .checks::-webkit-scrollbar { width: 4px; }
-    .checks::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
-    .chk-item { display: flex; align-items: center; gap: 7px; cursor: pointer; font-size: .82rem; transition: color .15s; }
-    .chk-item:hover { color: var(--accent); }
-    .chk-item input[type="checkbox"] { accent-color: var(--accent); cursor: pointer; }
+    .range-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: .78rem;
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+
+    .checks {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      max-height: 170px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    .checks::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    .checks::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 4px;
+    }
+
+    .chk-item {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      cursor: pointer;
+      font-size: .82rem;
+      transition: color .15s;
+    }
+
+    .chk-item:hover {
+      color: var(--accent);
+    }
+
+    .chk-item input[type="checkbox"] {
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
 
     .btn-refresh {
-      display: flex; align-items: center; justify-content: center; gap: 8px;
-      background: var(--accent); color: #000;
-      border: none; border-radius: 8px; padding: 10px 16px;
-      font-family: 'Inter', sans-serif; font-weight: 700; font-size: .84rem;
-      cursor: pointer; transition: opacity .2s, transform .15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      background: var(--accent);
+      color: #000;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 16px;
+      font-family: 'Inter', sans-serif;
+      font-weight: 700;
+      font-size: .84rem;
+      cursor: pointer;
+      transition: opacity .2s, transform .15s;
       margin-top: auto;
     }
-    .btn-refresh:hover { opacity: .82; transform: translateY(-1px); }
-    .btn-refresh:active { transform: scale(.97); }
+
+    .btn-refresh:hover {
+      opacity: .82;
+      transform: translateY(-1px);
+    }
+
+    .btn-refresh:active {
+      transform: scale(.97);
+    }
 
     /* ── MAIN ── */
-    main { flex: 1; padding: 30px 34px; }
+    main {
+      flex: 1;
+      padding: 30px 34px;
+    }
 
     /* ── HEADER ── */
-    .dash-hdr { margin-bottom: 26px; }
-    .dash-hdr h1 {
-      font-size: 1.65rem; font-weight: 800; letter-spacing: -.03em;
-      background: linear-gradient(90deg, var(--accent), var(--accent4));
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    .dash-hdr {
+      margin-bottom: 26px;
     }
-    .dash-hdr p { color: var(--muted); font-size: .83rem; margin-top: 4px; }
+
+    .dash-hdr h1 {
+      font-size: 1.65rem;
+      font-weight: 800;
+      letter-spacing: -.03em;
+      background: linear-gradient(90deg, var(--accent), var(--accent4));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .dash-hdr p {
+      color: var(--muted);
+      font-size: .83rem;
+      margin-top: 4px;
+    }
 
     /* ── METRICS ── */
-    .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 28px; }
-    .mcard {
-      background: var(--bg2); border: 1px solid var(--border);
-      border-radius: var(--r); padding: 16px 18px;
-      display: flex; flex-direction: column; gap: 4px;
-      box-shadow: var(--sh); transition: transform .2s, border-color .2s;
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-bottom: 28px;
     }
-    .mcard:hover { transform: translateY(-2px); border-color: var(--accent); }
-    .mlabel { font-size: .7rem; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .06em; }
-    .mval   { font-size: 1.85rem; font-weight: 800; letter-spacing: -.03em; }
-    .mcard:nth-child(1) .mval { color: var(--accent); }
-    .mcard:nth-child(2) .mval { color: var(--accent3); }
-    .mcard:nth-child(3) .mval { color: var(--accent5); }
-    .mcard:nth-child(4) .mval { color: var(--accent4); }
+
+    .mcard {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 16px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      box-shadow: var(--sh);
+      transition: transform .2s, border-color .2s;
+    }
+
+    .mcard:hover {
+      transform: translateY(-2px);
+      border-color: var(--accent);
+    }
+
+    .mlabel {
+      font-size: .7rem;
+      color: var(--muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
+
+    .mval {
+      font-size: 1.85rem;
+      font-weight: 800;
+      letter-spacing: -.03em;
+    }
+
+    .mcard:nth-child(1) .mval {
+      color: var(--accent);
+    }
+
+    .mcard:nth-child(2) .mval {
+      color: var(--accent3);
+    }
+
+    .mcard:nth-child(3) .mval {
+      color: var(--accent5);
+    }
+
+    .mcard:nth-child(4) .mval {
+      color: var(--accent4);
+    }
 
     /* ── CHART CARD ── */
     .card {
-      background: var(--bg2); border: 1px solid var(--border);
-      border-radius: var(--r); padding: 22px;
-      margin-bottom: 22px; box-shadow: var(--sh);
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 22px;
+      margin-bottom: 22px;
+      box-shadow: var(--sh);
     }
-    .card h2   { font-size: .98rem; font-weight: 700; margin-bottom: 3px; }
-    .card .cap { font-size: .76rem; color: var(--muted); margin-bottom: 14px; }
-    .vega-wrap { width: 100%; }
+
+    .card h2 {
+      font-size: .98rem;
+      font-weight: 700;
+      margin-bottom: 3px;
+    }
+
+    .card .cap {
+      font-size: .76rem;
+      color: var(--muted);
+      margin-bottom: 14px;
+    }
+
+    .vega-wrap {
+      width: 100%;
+      overflow: auto;
+      max-height: 480px;
+      padding-bottom: 8px; /* Espaço para a barra horizontal */
+      padding-right: 8px; /* Espaço para a barra vertical */
+    }
+
+    /* Scrollbar Style */
+    .vega-wrap::-webkit-scrollbar {
+      width: 10px;
+      height: 10px;
+    }
+
+    .vega-wrap::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.1);
+      border-radius: 4px;
+    }
+
+    .vega-wrap::-webkit-scrollbar-thumb {
+      background: var(--muted); /* Cor mais clara para dar destaque/contraste */
+      border-radius: 4px;
+    }
+    .vega-wrap::-webkit-scrollbar-thumb:hover {
+      background: var(--accent); /* Dá brilho ao passar o mouse */
+    }
 
     /* override vega-embed theme to dark */
-    .vega-embed { width: 100% !important; }
-    .vega-embed .vega-actions a { color: var(--muted) !important; }
+    .vega-embed {
+      width: 100% !important;
+    }
 
-    .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; margin-bottom: 22px; }
+    .vega-embed .vega-actions a {
+      color: var(--muted) !important;
+    }
 
-    hr.div { border: none; border-top: 1px solid var(--border); margin: 6px 0 22px; }
+    .row2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 22px;
+      margin-bottom: 22px;
+    }
+
+    hr.div {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 6px 0 22px;
+    }
 
     /* ── TABLE ── */
-    .tbl-wrap { overflow-x: auto; border-radius: 8px; }
-    table { width: 100%; border-collapse: collapse; font-size: .83rem; }
+    .tbl-wrap {
+      overflow-x: auto;
+      border-radius: 8px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .83rem;
+    }
+
     thead th {
-      background: var(--bg3); color: var(--muted);
-      font-weight: 600; text-align: left;
-      padding: 9px 13px; font-size: .72rem;
-      text-transform: uppercase; letter-spacing: .06em;
+      background: var(--bg3);
+      color: var(--muted);
+      font-weight: 600;
+      text-align: left;
+      padding: 9px 13px;
+      font-size: .72rem;
+      text-transform: uppercase;
+      letter-spacing: .06em;
     }
-    tbody tr { border-bottom: 1px solid var(--border); transition: background .13s; }
-    tbody tr:hover { background: var(--bg3); }
-    tbody td { padding: 8px 13px; }
 
-    .badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: .7rem; font-weight: 600; }
-    .b-cncd { background: rgba(63,185,80,.15);  color: var(--accent3); }
-    .b-dep  { background: rgba(88,166,255,.15); color: var(--accent); }
-    .b-arq  { background: rgba(247,129,102,.15);color: var(--accent2); }
-    .b-ex   { background: rgba(210,168,255,.15);color: var(--accent4); }
-    .b-def  { background: rgba(255,166,87,.15); color: var(--accent5); }
-    .b-dk   { background: rgba(139,148,158,.15);color: var(--muted); }
-
-    .pag {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 11px 3px; font-size: .81rem; color: var(--muted);
-    }
-    .pag-btns { display: flex; gap: 7px; }
-    .pbtn {
-      background: var(--bg3); border: 1px solid var(--border);
-      color: var(--text); border-radius: 6px; padding: 5px 13px;
-      cursor: pointer; font-family: 'Inter', sans-serif; font-size: .81rem;
+    tbody tr {
+      border-bottom: 1px solid var(--border);
       transition: background .13s;
     }
-    .pbtn:hover:not(:disabled) { background: var(--accent); color: #000; border-color: var(--accent); }
-    .pbtn:disabled { opacity: .3; cursor: default; }
 
-    footer { font-size: .73rem; color: var(--muted); text-align: center; padding: 10px 0 4px; }
+    tbody tr:hover {
+      background: var(--bg3);
+    }
+
+    tbody td {
+      padding: 8px 13px;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-size: .7rem;
+      font-weight: 600;
+    }
+
+    .b-cncd {
+      background: rgba(63, 185, 80, .15);
+      color: var(--accent3);
+    }
+
+    .b-dep {
+      background: rgba(88, 166, 255, .15);
+      color: var(--accent);
+    }
+
+    .b-arq {
+      background: rgba(247, 129, 102, .15);
+      color: var(--accent2);
+    }
+
+    .b-ex {
+      background: rgba(210, 168, 255, .15);
+      color: var(--accent4);
+    }
+
+    .b-def {
+      background: rgba(255, 166, 87, .15);
+      color: var(--accent5);
+    }
+
+    .b-dk {
+      background: rgba(139, 148, 158, .15);
+      color: var(--muted);
+    }
+
+    .pag {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 11px 3px;
+      font-size: .81rem;
+      color: var(--muted);
+    }
+
+    .pag-btns {
+      display: flex;
+      gap: 7px;
+    }
+
+    .pbtn {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 6px;
+      padding: 5px 13px;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      font-size: .81rem;
+      transition: background .13s;
+    }
+
+    .pbtn:hover:not(:disabled) {
+      background: var(--accent);
+      color: #000;
+      border-color: var(--accent);
+    }
+
+    .pbtn:disabled {
+      opacity: .3;
+      cursor: default;
+    }
+
+    footer {
+      font-size: .73rem;
+      color: var(--muted);
+      text-align: center;
+      padding: 10px 0 4px;
+    }
 
     @media (max-width: 1100px) {
-      .metrics { grid-template-columns: repeat(2,1fr); }
-      .row2    { grid-template-columns: 1fr; }
+      .metrics {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .row2 {
+        grid-template-columns: 1fr;
+      }
     }
+
     @media (max-width: 768px) {
-      #sidebar { display:none; }
-      main { padding: 18px 14px; }
-      .metrics { grid-template-columns: 1fr 1fr; }
+      #sidebar {
+        display: none;
+      }
+
+      main {
+        padding: 18px 14px;
+      }
+
+      .metrics {
+        grid-template-columns: 1fr 1fr;
+      }
     }
   </style>
 </head>
+
 <body>
 
-<div id="loader">
-  <div class="loader-logo">📊</div>
-  <div class="loader-title">Dashboard de Patentes BR</div>
-  <div class="progress-track"><div class="progress-fill" id="loader-bar"></div></div>
-  <div id="loader-pct">0%</div>
-  <div id="loader-msg">Iniciando…</div>
-</div>
-
-<div class="wrapper">
-
-  <!-- ── SIDEBAR ── -->
-  <aside id="sidebar">
-    <div class="sidebar-logo">
-      <span class="ico">📊</span>
-      <div>Dashboard<br><small>Patentes BR — IBICT</small></div>
+  <div id="loader">
+    <div class="loader-logo">📊</div>
+    <div class="loader-title">Dashboard de Patentes BR</div>
+    <div class="progress-track">
+      <div class="progress-fill" id="loader-bar"></div>
     </div>
-
-    <div class="filter-group">
-      <div class="flabel">🔎 Filtros</div>
+    <div id="loader-pct">0%</div>
+    <div id="loader-msg">Iniciando…</div>
+    <button id="loader-skip" onclick="hideLoader()"
+      style="display:none; margin-top:20px; background:var(--bg3); color:var(--text); border:1px solid var(--border); padding:8px 16px; border-radius:8px; cursor:pointer; font-size:0.8rem;">Pular
+      carregamento</button>
+    <div id="debug-log"
+      style="display:none; position:fixed; bottom:10px; left:10px; font-size:0.6rem; color:var(--muted); font-family:monospace; z-index:10000; pointer-events:none;">
     </div>
+  </div>
 
-    <div class="filter-group">
-      <div class="flabel">Ano de Depósito</div>
-      <div class="range-row"><span id="anoMin">—</span><span id="anoMax">—</span></div>
-      <input type="range" id="slMin" /><input type="range" id="slMax" />
-    </div>
+  <div class="wrapper">
 
-    <div class="filter-group">
-      <div class="flabel">Status</div>
-      <div class="checks" id="statusList"></div>
-    </div>
-
-    <div class="filter-group">
-      <div class="flabel">Tipo</div>
-      <div class="checks" id="tipoList"></div>
-    </div>
-
-    <button class="btn-refresh" id="btnRefresh">🔄 Atualizar dados</button>
-    <button class="btn-refresh" id="btnHistory" style="background:var(--bg3); color:var(--text); border:1px solid var(--border); margin-top:8px;">📚 Carregar histórico completo</button>
-  </aside>
-
-  <!-- ── MAIN ── -->
-  <main>
-    <div class="dash-hdr">
-      <h1>📊 Dashboard de Patentes Brasileiras</h1>
-      <p id="caption">Fonte: IBICT — pi-api-dev.ibict.br | carregando…</p>
-    </div>
-
-    <div class="metrics">
-      <div class="mcard"><div class="mlabel">Total na base</div><div class="mval" id="mTotal">—</div></div>
-      <div class="mcard"><div class="mlabel">Registros filtrados</div><div class="mval" id="mFiltered">—</div></div>
-      <div class="mcard"><div class="mlabel">Anos cobertos</div><div class="mval" id="mAnos">—</div></div>
-      <div class="mcard"><div class="mlabel">Status distintos</div><div class="mval" id="mStatus">—</div></div>
-    </div>
-
-    <hr class="div" />
-
-    <div class="card">
-      <h2>📅 Patentes por Ano — Stacked Bar Chart</h2>
-      <div class="cap">Contagem de patentes depositadas por ano, empilhadas por status</div>
-      <div class="vega-wrap" id="vg1"></div>
-    </div>
-
-    <div class="card">
-      <h2>📊 Top Classificações — Grouped Bar Chart</h2>
-      <div class="cap">Comparação entre as principais classificações CPC e IPC</div>
-      <div class="vega-wrap" id="vg2"></div>
-    </div>
-
-    <div class="card">
-      <h2>📈 Distribuição de Status por Ano — 100% Stacked</h2>
-      <div class="cap">Proporção de cada status ao longo dos anos</div>
-      <div class="vega-wrap" id="vg3"></div>
-    </div>
-
-    <div class="card">
-      <h2>⏱️ Tempo de Concessão por Requerente — Gantt</h2>
-      <div class="cap">Linha do tempo entre ano de depósito e concessão dos principais requerentes</div>
-      <div class="vega-wrap" id="vg4"></div>
-    </div>
-
-    <div class="row2">
-      <div class="card" style="margin-bottom:0">
-        <h2>🏢 Principais Requerentes</h2>
-        <div class="cap">Top 15 por número de patentes</div>
-        <div class="vega-wrap" id="vg5"></div>
+    <!-- ── SIDEBAR ── -->
+    <aside id="sidebar">
+      <div class="sidebar-logo">
+        <span class="ico">📊</span>
+        <div>Dashboard<br><small>Patentes BR — IBICT</small></div>
       </div>
-      <div class="card" style="margin-bottom:0">
-        <h2>👤 Principais Inventores</h2>
-        <div class="cap">Top 15 por número de patentes</div>
-        <div class="vega-wrap" id="vg6"></div>
-      </div>
-    </div>
 
-    <hr class="div" />
-
-    <div class="card">
-      <h2>📋 Lista de Patentes</h2>
-      <div class="cap" id="tblCap"></div>
-      <div class="tbl-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Ano Depósito</th><th>Título</th><th>Status</th><th>Tipo</th><th>País</th>
-            </tr>
-          </thead>
-          <tbody id="tblBody"></tbody>
-        </table>
+      <div class="filter-group">
+        <div class="flabel">🔎 Filtros</div>
       </div>
-      <div class="pag">
-        <span id="pagInfo"></span>
-        <div class="pag-btns">
-          <button class="pbtn" id="btnPrev" onclick="changePage(-1)">← Anterior</button>
-          <button class="pbtn" id="btnNext" onclick="changePage(1)">Próxima →</button>
+
+      <div class="filter-group">
+        <div class="flabel">Ano de Depósito</div>
+        <div class="range-row"><span id="anoMin">—</span><span id="anoMax">—</span></div>
+        <input type="range" id="slMin" /><input type="range" id="slMax" />
+      </div>
+
+      <div class="filter-group">
+        <div class="flabel">Status</div>
+        <div class="checks" id="statusList"></div>
+      </div>
+
+      <div class="filter-group">
+        <div class="flabel">Tipo</div>
+        <div class="checks" id="tipoList"></div>
+      </div>
+
+      <button class="btn-refresh" id="btnRefresh">🔄 Atualizar dados</button>
+      <button class="btn-refresh" id="btnHistory"
+        style="background:var(--bg3); color:var(--text); border:1px solid var(--border); margin-top:8px;">📚 Carregar
+        histórico completo</button>
+    </aside>
+
+    <!-- ── MAIN ── -->
+    <main>
+      <div class="dash-hdr">
+        <h1>📊 Dashboard de Patentes Brasileiras</h1>
+        <p id="caption">Fonte: IBICT — pi-api-dev.ibict.br | carregando…</p>
+      </div>
+
+      <div class="metrics">
+        <div class="mcard">
+          <div class="mlabel">Total na base</div>
+          <div class="mval" id="mTotal">—</div>
+        </div>
+        <div class="mcard">
+          <div class="mlabel">Registros filtrados</div>
+          <div class="mval" id="mFiltered">—</div>
+        </div>
+        <div class="mcard">
+          <div class="mlabel">Anos cobertos</div>
+          <div class="mval" id="mAnos">—</div>
+        </div>
+        <div class="mcard">
+          <div class="mlabel">Status distintos</div>
+          <div class="mval" id="mStatus">—</div>
         </div>
       </div>
-    </div>
 
-    <footer>Dashboard com Vega (puro) | Dados: IBICT — pi-api-dev.ibict.br</footer>
-  </main>
-</div>
+      <hr class="div" />
 
-<script>
-// ── CONFIG ────────────────────────────────────────────────────────────────────
-const HOST = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
-             ? "localhost"
-             : "54.91.227.9";
+      <div class="card">
+        <h2>📅 Patentes por Ano — Stacked Bar Chart</h2>
+        <div class="cap">Contagem de patentes depositadas por ano, empilhadas por status</div>
+        <div class="vega-wrap" id="vg1"></div>
+      </div>
 
-const API_BASE  = `http://${HOST}:8888/api/v1/patente`;
-const BATCH     = 100;
-const PAGE_SIZE = 20;
+      <div class="card">
+        <h2>📊 Top Classificações — Grouped Bar Chart</h2>
+        <div class="cap">Comparação entre as principais classificações CPC e IPC</div>
+        <div class="vega-wrap" id="vg2"></div>
+      </div>
 
-// ── Tema dark para Vega puro ──────────────────────────────────────────────────
-const BG      = "#161b22";
-const MUTED   = "#8b949e";
-const TEXT    = "#e6edf3";
-const GRID    = "#30363d";
-const FONT    = "Inter, sans-serif";
-const PALETTE = ["#58a6ff","#3fb950","#f78166","#d2a8ff","#ffa657","#79c0ff","#56d364","#ff7b72","#e3b341","#db61a2"];
+      <div class="card">
+        <h2>📈 Distribuição de Status por Ano — 100% Stacked</h2>
+        <div class="cap">Proporção de cada status ao longo dos anos</div>
+        <div class="vega-wrap" id="vg3"></div>
+      </div>
 
-function axisStyle(orient, extra = {}) {
-  return {
-    orient, scale: extra.scale || (orient === "bottom" || orient === "top" ? "xscale" : "yscale"),
-    labelColor: MUTED, titleColor: MUTED,
-    domainColor: GRID, tickColor: GRID,
-    gridColor: GRID, grid: true,
-    labelFont: FONT, titleFont: FONT,
-    ...extra
-  };
-}
+      <div class="card">
+        <h2>⏱️ Tempo de Concessão por Requerente — Gantt</h2>
+        <div class="cap">Linha do tempo entre ano de depósito e concessão dos principais requerentes</div>
+        <div class="vega-wrap" id="vg4"></div>
+      </div>
 
-function legendStyle(fill, title, orient = "right") {
-  return { fill, title, orient, titleColor: MUTED, labelColor: TEXT, titleFont: FONT, labelFont: FONT };
-}
+      <div class="row2">
+        <div class="card" style="margin-bottom:0">
+          <h2>🏢 Principais Requerentes</h2>
+          <div class="cap">Top 15 por número de patentes</div>
+          <div class="vega-wrap" id="vg5"></div>
+        </div>
+        <div class="card" style="margin-bottom:0">
+          <h2>👤 Principais Inventores</h2>
+          <div class="cap">Top 15 por número de patentes</div>
+          <div class="vega-wrap" id="vg6"></div>
+        </div>
+      </div>
 
-function containerWidth(id) {
-  const el = document.getElementById(id);
-  return el ? Math.max((el.clientWidth || 820) - 44, 400) : 820;
-}
+      <hr class="div" />
 
-// ── STATE ─────────────────────────────────────────────────────────────────────
-let allData = [], totalBase = 0, filtered = [], page = 1;
-let views = {}; // vega.View keyed by element id
+      <div class="card">
+        <h2>📋 Lista de Patentes</h2>
+        <div class="cap" id="tblCap"></div>
+        <div class="tbl-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Ano Depósito</th>
+                <th>Título</th>
+                <th>Status</th>
+                <th>Tipo</th>
+                <th>País</th>
+              </tr>
+            </thead>
+            <tbody id="tblBody"></tbody>
+          </table>
+        </div>
+        <div class="pag">
+          <span id="pagInfo"></span>
+          <div class="pag-btns">
+            <button class="pbtn" id="btnPrev" onclick="changePage(-1)">← Anterior</button>
+            <button class="pbtn" id="btnNext" onclick="changePage(1)">Próxima →</button>
+          </div>
+        </div>
+      </div>
 
-// ── UTILS ─────────────────────────────────────────────────────────────────────
-const fmt = n => n.toLocaleString("pt-BR");
+      <footer>Dashboard com Vega (puro) | Dados: IBICT — pi-api-dev.ibict.br</footer>
+    </main>
+  </div>
 
-function counter(arr) {
-  const m = {};
-  for (const v of arr) m[v] = (m[v] || 0) + 1;
-  return m;
-}
-function topN(obj, n) {
-  return Object.entries(obj).sort((a, b) => b[1] - a[1]).slice(0, n);
-}
-function badgeClass(s = "") {
-  s = s.toLowerCase();
-  if (s.includes("conced") || s.includes("deferido")) return "b-cncd";
-  if (s.includes("deposit") || s.includes("publicado") || s.includes("exame")) return "b-dep";
-  if (s.includes("arquiv") || s.includes("indeferido")) return "b-arq";
-  return "b-dk";
-}
+  <script>
+    // ── CONFIG ────────────────────────────────────────────────────────────────────
+    const isLocal = !window.location.hostname ||
+      window.location.hostname === "localhost" ||
+      window.location.hostname === "127.0.0.1";
 
-// ── LOAD DATA (paginado) ──────────────────────────────────────────────────────
-function mapDoc(d) {
-  // applicants → array de objetos {name, ...}  |  ou strings (fallback)
-  const apps = (d.applicants || []).map(a => (a && a.name) ? a.name : String(a)).filter(Boolean);
-  const invs = (d.inventors  || []).map(i => (i && i.name) ? i.name : String(i)).filter(Boolean);
-  // classification.cpc/ipc → [{text: "A61K 8/00"}, ...]
-  const cls  = d.classification || {};
-  const cpc  = (cls.cpc || []).map(c => (c.text || "").slice(0, 7)).filter(Boolean);
-  const ipc  = (cls.ipc || []).map(c => (c.text || "").slice(0, 7)).filter(Boolean);
-  return {
-    titulo:        d.title           || "Sem título",
-    ano_deposito:  d.deposit_year    ? +d.deposit_year    : null,
-    ano_concessao: d.concession_year ? +d.concession_year : null,
-    pais:          d.country_code    || "BR",
-    status:        d.status          || "Desconhecido",
-    tipo:          d.patent_type     || "Não informado",
-    applicants: apps,
-    inventors:  invs,
-    cpc, ipc,
-  };
-}
+    const HOST = isLocal ? "127.0.0.1" : "54.91.227.9";
 
-function setLoaderMsg(txt) {
-  const el = document.getElementById("loader-msg");
-  if (el) el.textContent = txt;
-}
+    const API_BASE = `http://${HOST}:8888/api/v1/patente`;
+    const BATCH = 100;
+    const PAGE_SIZE = 20;
 
-function setLoaderProgress(p) {
-  const pct = Math.round(p * 100);
-  const bar = document.getElementById("loader-bar");
-  const pctEl = document.getElementById("loader-pct");
-  if (bar)   bar.style.width = pct + "%";
-  if (pctEl) pctEl.textContent = pct + "%";
-}
+    // ── Tema dark para Vega puro ──────────────────────────────────────────────────
+    const BG = "#161b22";
+    const MUTED = "#8b949e";
+    const TEXT = "#e6edf3";
+    const GRID = "#30363d";
+    const FONT = "Inter, sans-serif";
+    const PALETTE = ["#58a6ff", "#3fb950", "#f78166", "#d2a8ff", "#ffa657", "#79c0ff", "#56d364", "#ff7b72", "#e3b341", "#db61a2"];
 
-// Aguarda o cache ficar pronto fazendo polling de /cache-status
-async function waitForCache(forceRefresh = false) {
-  if (forceRefresh) {
-    setLoaderMsg("♻️ Solicitando atualização dos dados…");
-    await fetch(`http://${HOST}:8888/full-data?refresh=true`, { method: "GET" }).catch(() => {});
-    // Aguarda um momento para o proxy registrar o reinício
-    await new Promise(r => setTimeout(r, 1500));
-  }
-
-  while (true) {
-    try {
-      const resp = await fetch(`http://${HOST}:8888/cache-status`);
-      if (resp.ok) {
-        const s = await resp.json();
-        setLoaderMsg(s.message || "Coletando dados…");
-        setLoaderProgress(s.progress || 0);
-        if (s.ready) break;
-      }
-    } catch (e) {
-      setLoaderMsg("Aguardando proxy…");
+    function axisStyle(orient, extra = {}) {
+      return {
+        orient, scale: extra.scale || (orient === "bottom" || orient === "top" ? "xscale" : "yscale"),
+        labelColor: MUTED, titleColor: MUTED,
+        domainColor: GRID, tickColor: GRID,
+        gridColor: GRID, grid: true,
+        labelFont: FONT, titleFont: FONT,
+        ...extra
+      };
     }
-    await new Promise(r => setTimeout(r, 2000));
-  }
-}
 
-async function loadData(forceRefresh = false) {
-  if (forceRefresh) {
-    // Mostra loader novamente
-    const loader = document.getElementById("loader");
-    loader.style.display = "flex"; loader.style.opacity = "1";
-    setLoaderProgress(0);
-  }
+    function legendStyle(fill, title, orient = "right") {
+      return { fill, title, orient, titleColor: MUTED, labelColor: TEXT, titleFont: FONT, labelFont: FONT };
+    }
 
-  // Espera o cache estar disponível antes de buscar
-  await waitForCache(forceRefresh);
+    function containerWidth(id, minW = 0) {
+      const el = document.getElementById(id);
+      if (!el) return Math.max(820, minW);
+      
+      // Quando autosize="fit-x" está habilitado, spec.width representa o LARGURA TOTAL
+      // (dados + eixos + legendas). Portanto apenas reduzimos espaço pro scrollbar (16px).
+      let w = el.clientWidth - 16;
+      if (w < 400 && !minW) w = 400;
+      if (minW && w < minW) w = minW;
+      return w;
+    }
 
-  setLoaderProgress(1.0);
-  setLoaderMsg("✅ Dados prontos! Carregando dashboard…");
-  
-  const url  = `http://${HOST}:8888/full-data`;
-  const resp = await fetch(url, { headers: { Accept: "application/json" } });
+    // ── STATE ─────────────────────────────────────────────────────────────────────
+    let summaryData = null, totalBase = 0, filteredCount = 0, page = 1;
+    let views = {}; // vega.View keyed by element id
 
-  if (!resp.ok) throw new Error(`HTTP ${resp.status} — ${resp.statusText}`);
+    // ── UTILS ─────────────────────────────────────────────────────────────────────
+    const fmt = n => n.toLocaleString("pt-BR");
 
-  setLoaderMsg("Processando dados…");
-  const json = await resp.json();
+    function counter(arr) {
+      const m = {};
+      for (const v of arr) m[v] = (m[v] || 0) + 1;
+      return m;
+    }
+    function topN(obj, n) {
+      return Object.entries(obj).sort((a, b) => b[1] - a[1]).slice(0, n);
+    }
+    function badgeClass(s = "") {
+      s = s.toLowerCase();
+      if (s.includes("conced") || s.includes("deferido")) return "b-cncd";
+      if (s.includes("deposit") || s.includes("publicado") || s.includes("exame")) return "b-dep";
+      if (s.includes("arquiv") || s.includes("indeferido")) return "b-arq";
+      return "b-dk";
+    }
 
-  totalBase = json.total || json.count || 0;
-  allData   = (json.results || []).map(mapDoc);
-}
+    // ── LOADING ──────────────────────────────────────────────────────────────────
+    function setLoaderMsg(txt) {
+      const el = document.getElementById("loader-msg");
+      if (el) el.textContent = txt;
+      const dbg = document.getElementById("debug-log");
+      if (dbg) dbg.textContent = `[log] ${txt}`;
+    }
 
-// ── BUILD FILTERS ─────────────────────────────────────────────────────────────
-function buildFilters(preserveValues = false) {
-  const anos = allData.map(d => d.ano_deposito).filter(Boolean);
-  const minA = Math.min(...anos), maxA = Math.max(...anos);
-  
-  const slMin = document.getElementById("slMin");
-  const slMax = document.getElementById("slMax");
+    function setLoaderProgress(p) {
+      const pct = Math.round(p * 100);
+      const bar = document.getElementById("loader-bar");
+      const pctEl = document.getElementById("loader-pct");
+      if (bar) bar.style.width = pct + "%";
+      if (pctEl) pctEl.textContent = pct + "%";
 
-  const currentMin = preserveValues ? +slMin.value : minA;
-  const currentMax = preserveValues ? +slMax.value : maxA;
-
-  for (const [id, el, val] of [["slMin", slMin, currentMin], ["slMax", slMax, currentMax]]) {
-    el.min = minA; el.max = maxA; el.value = val;
-  }
-  document.getElementById("anoMin").textContent = currentMin;
-  document.getElementById("anoMax").textContent = currentMax;
-
-  // Remove existing listeners by cloning (to prevent duplicates if called twice)
-  const newSlMin = slMin.cloneNode(true);
-  const newSlMax = slMax.cloneNode(true);
-  slMin.parentNode.replaceChild(newSlMin, slMin);
-  slMax.parentNode.replaceChild(newSlMax, slMax);
-
-  newSlMin.addEventListener("input", () => {
-    if (+newSlMin.value > +newSlMax.value) newSlMin.value = newSlMax.value;
-    document.getElementById("anoMin").textContent = newSlMin.value;
-    applyFilters();
-  });
-  newSlMax.addEventListener("input", () => {
-    if (+newSlMax.value < +newSlMin.value) newSlMax.value = newSlMin.value;
-    document.getElementById("anoMax").textContent = newSlMax.value;
-    applyFilters();
-  });
-
-  buildChecks("statusList", [...new Set(allData.map(d => d.status))].sort());
-  buildChecks("tipoList",   [...new Set(allData.map(d => d.tipo))].sort());
-}
-
-function buildChecks(id, opts) {
-  const el = document.getElementById(id);
-  el.innerHTML = opts.map(o =>
-    `<label class="chk-item"><input type="checkbox" value="${o}" onchange="applyFilters()"> ${o}</label>`
-  ).join("");
-}
-
-function getChecked(id) {
-  return [...document.querySelectorAll(`#${id} input:checked`)].map(i => i.value);
-}
-
-function applyFilters() {
-  const minA = +document.getElementById("slMin").value;
-  const maxA = +document.getElementById("slMax").value;
-  const stSel = getChecked("statusList");
-  const tiSel = getChecked("tipoList");
-
-  filtered = allData.filter(d => {
-    if (!d.ano_deposito) return false;
-    if (d.ano_deposito < minA || d.ano_deposito > maxA) return false;
-    if (stSel.length && !stSel.includes(d.status)) return false;
-    if (tiSel.length && !tiSel.includes(d.tipo))   return false;
-    return true;
-  });
-  page = 1;
-  updateAll();
-}
-
-// ── METRICS ───────────────────────────────────────────────────────────────────
-function updateMetrics() {
-  document.getElementById("mTotal").textContent    = fmt(totalBase);
-  document.getElementById("mFiltered").textContent = fmt(filtered.length);
-  document.getElementById("mAnos").textContent     = new Set(filtered.map(d => d.ano_deposito).filter(Boolean)).size;
-  document.getElementById("mStatus").textContent   = new Set(filtered.map(d => d.status)).size;
-  document.getElementById("caption").textContent   =
-    `Fonte: IBICT — pi-api-dev.ibict.br | ${fmt(totalBase)} registros na base`;
-}
-
-// ── VEGA PURO — renderizador ──────────────────────────────────────────────────
-function renderSpec(id, spec) {
-  if (views[id]) { views[id].finalize(); delete views[id]; }
-  spec.background = BG;
-  spec.padding    = spec.padding ?? { left: 60, right: 20, top: 10, bottom: 50 };
-  spec.width      = containerWidth(id);
-  const view = new vega.View(vega.parse(spec), {
-    renderer: "svg",
-    container: `#${id}`,
-    hover: true,
-  });
-  view.run();
-  views[id] = view;
-  return Promise.resolve();
-}
-
-// ── CHART 1: Stacked Bar por Ano (Vega puro) ─────────────────────────────────
-function buildVg1() {
-  // Agrega em JS: [{ano, status, count}]
-  const agg = {};
-  for (const d of filtered) {
-    if (!d.ano_deposito) continue;
-    const k = `${d.ano_deposito}||${d.status}`;
-    agg[k] = (agg[k] || { ano: String(d.ano_deposito), status: d.status, count: 0 });
-    agg[k].count++;
-  }
-  const rows = Object.values(agg);
-  const anos    = [...new Set(rows.map(r => r.ano))].sort();
-  const statuses = [...new Set(rows.map(r => r.status))];
-
-  const spec = {
-    "$schema": "https://vega.github.io/schema/vega/v5.json",
-    "height": 360,
-    "data": [
-      { "name": "table", "values": rows,
-        "transform": [
-          { "type": "stack", "groupby": ["ano"], "field": "count", "sort": {"field": "status"}, "as": ["y0","y1"] }
-        ]
+      if (pct >= 5) {
+        const skip = document.getElementById("loader-skip");
+        if (skip && skip.style.display === "none") {
+          // Mostra o botão de pular se ficar parado mais de 5s
+          setTimeout(() => {
+            if (document.getElementById("loader").style.display !== "none") {
+              skip.style.display = "block";
+            }
+          }, 5000);
+        }
       }
-    ],
-    "scales": [
-      { "name": "xscale", "type": "band", "domain": anos, "range": "width", "paddingInner": 0.15, "paddingOuter": 0.05 },
-      { "name": "yscale", "type": "linear", "domain": {"data": "table", "field": "y1"}, "nice": true, "range": "height" },
-      { "name": "color",  "type": "ordinal", "domain": statuses, "range": PALETTE }
-    ],
-    "axes": [
-      { "orient": "bottom", "scale": "xscale", "labelColor": MUTED, "domainColor": GRID, "tickColor": GRID, "labelFont": FONT, "labelAngle": -40, "labelAlign": "right", "title": "Ano de Depósito", "titleColor": MUTED, "titleFont": FONT },
-      { "orient": "left",   "scale": "yscale", "labelColor": MUTED, "domainColor": GRID, "tickColor": GRID, "labelFont": FONT, "grid": true, "gridColor": GRID, "title": "Número de Patentes", "titleColor": MUTED, "titleFont": FONT }
-    ],
-    "legends": [ legendStyle("color", "Status") ],
-    "marks": [{
-      "type": "rect",
-      "from": {"data": "table"},
-      "encode": {
-        "enter": {
-          "x": {"scale": "xscale", "field": "ano"},
-          "width": {"scale": "xscale", "band": 1},
-          "y": {"scale": "yscale", "field": "y0"},
-          "y2": {"scale": "yscale", "field": "y1"},
-          "fill": {"scale": "color", "field": "status"},
-          "tooltip": {"signal": "{'Ano': datum.ano, 'Status': datum.status, 'Patentes': datum.count}"}
-        },
-        "hover": {"fillOpacity": {"value": 0.75}},
-        "update": {"fillOpacity": {"value": 1}}
+    }
+
+    function hideLoader() {
+      const loader = document.getElementById("loader");
+      if (!loader || loader.style.display === "none") return;
+      console.log("[dash] Hiding loader.");
+      setLoaderProgress(1.0);
+      setLoaderMsg("Pronto!");
+      loader.style.opacity = "0";
+      setTimeout(() => {
+        loader.style.display = "none";
+        const skip = document.getElementById("loader-skip");
+        if (skip) skip.style.display = "none";
+      }, 500);
+    }
+
+    // Aguarda o cache ficar pronto fazendo polling de /cache-status
+    async function waitForCache(forceRefresh = false) {
+      if (!isLocal) return; // Vercel não necessita verificação de cache
+
+      if (forceRefresh) {
+        setLoaderMsg("♻️ Solicitando atualização dos dados…");
+        await fetch(`http://${HOST}:8888/full-data?refresh=true`, { method: "GET" }).catch(() => { });
+        // Aguarda um momento para o proxy registrar o reinício
+        await new Promise(r => setTimeout(r, 1500));
       }
-    }]
-  };
-  return renderSpec("vg1", spec);
-}
 
-// ── CHART 2: Grouped Bar CPC vs IPC (Vega puro) ───────────────────────────────
-function buildVg2() {
-  const cpcC = counter(filtered.flatMap(d => d.cpc));
-  const ipcC = counter(filtered.flatMap(d => d.ipc));
-  const top10codes = topN(cpcC, 10).map(([k]) => k);
-  const rows = [
-    ...top10codes.map(k => ({ codigo: k, sistema: "CPC", count: cpcC[k] || 0 })),
-    ...top10codes.map(k => ({ codigo: k, sistema: "IPC", count: ipcC[k] || 0 })),
-  ];
-  const maxCount = Math.max(...rows.map(r => r.count));
-  const bandH = 28;
-
-  const spec = {
-    "$schema": "https://vega.github.io/schema/vega/v5.json",
-    "height": top10codes.length * bandH * 2 + 20,
-    "padding": {"left": 160, "right": 20, "top": 10, "bottom": 40},
-    "data": [{"name": "table", "values": rows}],
-    "scales": [
-      { "name": "xscale", "type": "linear", "domain": [0, maxCount], "range": "width", "nice": true },
-      { "name": "yscale", "type": "band", "domain": top10codes, "range": "height", "paddingInner": 0.2, "paddingOuter": 0.05 },
-      { "name": "yoffset", "type": "band", "domain": ["CPC","IPC"], "range": {"signal": "[0, bandwidth('yscale')]"} },
-      { "name": "color", "type": "ordinal", "domain": ["CPC","IPC"], "range": ["#58a6ff","#ffa657"] }
-    ],
-    "axes": [
-      { "orient": "bottom", "scale": "xscale", "labelColor": MUTED, "domainColor": GRID, "tickColor": GRID, "labelFont": FONT, "grid": true, "gridColor": GRID, "title": "Número de Patentes", "titleColor": MUTED, "titleFont": FONT },
-      { "orient": "left",   "scale": "yscale", "labelColor": TEXT,  "domainColor": GRID, "tickColor": GRID, "labelFont": FONT, "title": "Classificação", "titleColor": MUTED, "titleFont": FONT }
-    ],
-    "legends": [ legendStyle("color", "Sistema") ],
-    "marks": [{
-      "type": "rect",
-      "from": {"data": "table"},
-      "encode": {
-        "enter": {
-          "x": {"value": 0},
-          "x2": {"scale": "xscale", "field": "count"},
-          "y": {"signal": "scale('yscale', datum.codigo) + scale('yoffset', datum.sistema)"},
-          "height": {"signal": "bandwidth('yoffset') - 2"},
-          "fill": {"scale": "color", "field": "sistema"},
-          "cornerRadiusTopRight":    {"value": 3},
-          "cornerRadiusBottomRight": {"value": 3},
-          "tooltip": {"signal": "{'Código': datum.codigo, 'Sistema': datum.sistema, 'Patentes': datum.count}"}
-        },
-        "hover": {"fillOpacity": {"value": 0.75}},
-        "update": {"fillOpacity": {"value": 1}}
+      let failCount = 0;
+      while (true) {
+        try {
+          const resp = await fetch(`http://${HOST}:8888/cache-status`);
+          if (resp.ok) {
+            failCount = 0;
+            const s = await resp.json();
+            setLoaderMsg(s.message || "Coletando dados…");
+            setLoaderProgress(s.progress || 0);
+            if (s.ready) break;
+          }
+        } catch (e) {
+          failCount++;
+          if (failCount > 3) {
+            setLoaderMsg("⚠️ O servidor proxy parece estar offline. Verifique se 'python proxy.py' está sendo executado.");
+          } else {
+            setLoaderMsg("Aguardando resposta do servidor…");
+          }
+        }
+        await new Promise(r => setTimeout(r, 2000));
       }
-    }]
-  };
-  return renderSpec("vg2", spec);
-}
+    }
 
-// ── CHART 3: 100% Normalized Stacked (Vega puro) ─────────────────────────────
-function buildVg3() {
-  const agg = {};
-  for (const d of filtered) {
-    if (!d.ano_deposito) continue;
-    const k = `${d.ano_deposito}||${d.status}`;
-    agg[k] = agg[k] || { ano: String(d.ano_deposito), status: d.status, count: 0 };
-    agg[k].count++;
-  }
-  const rows = Object.values(agg);
-  const anos    = [...new Set(rows.map(r => r.ano))].sort();
-  const statuses = [...new Set(rows.map(r => r.status))];
-
-  const spec = {
-    "$schema": "https://vega.github.io/schema/vega/v5.json",
-    "height": 340,
-    "data": [
-      { "name": "table", "values": rows,
-        "transform": [
-          { "type": "stack", "groupby": ["ano"], "field": "count", "offset": "normalize", "sort": {"field": "status"}, "as": ["y0","y1"] }
-        ]
+    async function loadData(forceRefresh = false) {
+      if (forceRefresh) {
+        const loader = document.getElementById("loader");
+        loader.style.display = "flex"; loader.style.opacity = "1";
+        setLoaderProgress(0);
       }
-    ],
-    "scales": [
-      { "name": "xscale", "type": "band", "domain": anos, "range": "width", "paddingInner": 0.15, "paddingOuter": 0.05 },
-      { "name": "yscale", "type": "linear", "domain": [0,1], "range": "height" },
-      { "name": "color",  "type": "ordinal", "domain": statuses, "range": PALETTE }
-    ],
-    "axes": [
-      { "orient": "bottom", "scale": "xscale", "labelColor": MUTED, "domainColor": GRID, "tickColor": GRID, "labelFont": FONT, "labelAngle": -40, "labelAlign": "right", "title": "Ano de Depósito", "titleColor": MUTED, "titleFont": FONT },
-      { "orient": "left",   "scale": "yscale", "labelColor": MUTED, "domainColor": GRID, "tickColor": GRID, "labelFont": FONT, "grid": true, "gridColor": GRID, "format": ".0%", "title": "Proporção (%)", "titleColor": MUTED, "titleFont": FONT }
-    ],
-    "legends": [ legendStyle("color", "Status") ],
-    "marks": [{
-      "type": "rect",
-      "from": {"data": "table"},
-      "encode": {
-        "enter": {
-          "x": {"scale": "xscale", "field": "ano"},
-          "width": {"scale": "xscale", "band": 1},
-          "y": {"scale": "yscale", "field": "y0"},
-          "y2": {"scale": "yscale", "field": "y1"},
-          "fill": {"scale": "color", "field": "status"},
-          "tooltip": {"signal": "{'Ano': datum.ano, 'Status': datum.status, 'Patentes': datum.count}"}
-        },
-        "hover": {"fillOpacity": {"value": 0.75}},
-        "update": {"fillOpacity": {"value": 1}}
+
+      await waitForCache(forceRefresh);
+
+      setLoaderProgress(0.9);
+      setLoaderMsg("Obtendo resumo dos estatísticos…");
+
+      // Construir query params baseados nos filtros atuais se existirem e tiverem valores válidos
+      let params = "";
+      const slMin = document.getElementById("slMin");
+      const slMax = document.getElementById("slMax");
+
+      if (slMin && slMax && slMin.value && slMax.value && slMin.min !== "") {
+        const min = slMin.value;
+        const max = slMax.value;
+        const stSel = getChecked("statusList");
+        const tiSel = getChecked("tipoList");
+        // Se o valor for 50 (padrão de range sem min/max) e o range ainda não foi configurado, ignoramos
+        if (!(min == 50 && slMin.min == "0" && slMin.max == "100")) {
+          params = `?year_min=${min}&year_max=${max}`;
+          stSel.forEach(s => params += `&status=${encodeURIComponent(s)}`);
+          tiSel.forEach(t => params += `&tipo=${encodeURIComponent(t)}`);
+        }
       }
-    }]
-  };
-  return renderSpec("vg3", spec);
-}
 
-// ── CHART 4: Gantt (Vega puro) ────────────────────────────────────────────────
-function buildVg4() {
-  const valid = filtered.filter(d =>
-    d.ano_deposito && d.ano_concessao && d.ano_concessao >= d.ano_deposito
-  );
-  const byReq = {};
-  for (const d of valid) {
-    const req = d.applicants[0] || "Desconhecido";
-    if (!byReq[req]) byReq[req] = { min: Infinity, max: -Infinity, count: 0 };
-    byReq[req].min = Math.min(byReq[req].min, d.ano_deposito);
-    byReq[req].max = Math.max(byReq[req].max, d.ano_concessao);
-    byReq[req].count++;
-  }
-  const rows = Object.entries(byReq)
-    .sort((a, b) => b[1].count - a[1].count)
-    .slice(0, 15)
-    .map(([requerente, v]) => ({ requerente, inicio: v.min, fim: v.max, total: v.count }));
+      // Se for local (python proxy.py), chama porta 8888. Se for Vercel, chama a Serverless Function na rota /api/summary.
+      const url = isLocal ? `http://${HOST}:8888/summary${params}` : `/api/summary${params}`;
+      const resp = await fetch(url);
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
 
-  const reqs   = rows.map(r => r.requerente);
-  const allYrs = rows.flatMap(r => [r.inicio, r.fim]);
-  const minYr  = Math.min(...allYrs);
-  const maxYr  = Math.max(...allYrs);
-  const maxTot = Math.max(...rows.map(r => r.total));
-
-  const spec = {
-    "$schema": "https://vega.github.io/schema/vega/v5.json",
-    "height": rows.length * 28 + 20,
-    "padding": {"left": 200, "right": 20, "top": 10, "bottom": 40},
-    "data": [{"name": "table", "values": rows}],
-    "scales": [
-      { "name": "xscale", "type": "linear", "domain": [minYr - 1, maxYr + 1], "range": "width", "nice": false },
-      { "name": "yscale", "type": "band",   "domain": reqs,  "range": "height", "paddingInner": 0.3, "paddingOuter": 0.1 },
-      { "name": "color",  "type": "linear", "domain": [0, maxTot], "range": ["#1e3a5f","#58a6ff"] }
-    ],
-    "axes": [
-      { "orient": "bottom", "scale": "xscale", "labelColor": MUTED, "domainColor": GRID, "tickColor": GRID, "labelFont": FONT, "grid": true, "gridColor": GRID, "format": "d", "title": "Ano", "titleColor": MUTED, "titleFont": FONT },
-      { "orient": "left",   "scale": "yscale", "labelColor": TEXT,  "domainColor": GRID, "tickColor": GRID, "labelFont": FONT }
-    ],
-    "legends": [{ "fill": "color", "title": "Total de patentes", "orient": "right", "titleColor": MUTED, "labelColor": TEXT, "titleFont": FONT, "labelFont": FONT, "type": "gradient" }],
-    "marks": [{
-      "type": "rect",
-      "from": {"data": "table"},
-      "encode": {
-        "enter": {
-          "x":  {"scale": "xscale", "field": "inicio"},
-          "x2": {"scale": "xscale", "field": "fim"},
-          "y":  {"scale": "yscale", "field": "requerente"},
-          "height": {"scale": "yscale", "band": 1},
-          "fill": {"scale": "color", "field": "total"},
-          "cornerRadiusTopRight":    {"value": 4},
-          "cornerRadiusBottomRight": {"value": 4},
-          "tooltip": {"signal": "{'Requerente': datum.requerente, 'Depósito': datum.inicio, 'Concessão': datum.fim, 'Patentes': datum.total}"}
-        },
-        "hover": {"fillOpacity": {"value": 0.75}},
-        "update": {"fillOpacity": {"value": 1}}
+      const json = await resp.json();
+      if (json.ready === false) {
+        // Caso o proxy diga que ainda não está pronto
+        await new Promise(r => setTimeout(r, 2000));
+        return loadData(forceRefresh);
       }
-    }]
-  };
-  return renderSpec("vg4", spec);
-}
 
-// ── CHART 5: Requerentes (Vega puro) ─────────────────────────────────────────
-function buildVg5() {
-  const apps = topN(counter(filtered.flatMap(d => d.applicants)), 15)
-    .map(([name, count]) => ({ name, count }));
-  const names = apps.map(r => r.name);
-  const maxC  = Math.max(...apps.map(r => r.count));
+      summaryData = json;
+      totalBase = json.total_base;
+      filteredCount = json.filtered_count;
+      setLoaderProgress(1.0);
+    }
 
-  const spec = {
-    "$schema": "https://vega.github.io/schema/vega/v5.json",
-    "height": names.length * 28 + 20,
-    "padding": {"left": 200, "right": 20, "top": 10, "bottom": 40},
-    "data": [{"name": "table", "values": apps}],
-    "scales": [
-      { "name": "xscale", "type": "linear", "domain": [0, maxC], "range": "width", "nice": true },
-      { "name": "yscale", "type": "band",   "domain": names, "range": "height", "paddingInner": 0.25, "paddingOuter": 0.05 }
-    ],
-    "axes": [
-      { "orient": "bottom", "scale": "xscale", "labelColor": MUTED, "domainColor": GRID, "tickColor": GRID, "labelFont": FONT, "grid": true, "gridColor": GRID, "title": "Patentes", "titleColor": MUTED, "titleFont": FONT },
-      { "orient": "left",   "scale": "yscale", "labelColor": TEXT,  "domainColor": GRID, "tickColor": GRID, "labelFont": FONT }
-    ],
-    "marks": [{
-      "type": "rect",
-      "from": {"data": "table"},
-      "encode": {
-        "enter": {
-          "x": {"value": 0},
-          "x2": {"scale": "xscale", "field": "count"},
-          "y": {"scale": "yscale", "field": "name"},
-          "height": {"scale": "yscale", "band": 1},
-          "fill": {"value": "#58a6ff"},
-          "cornerRadiusTopRight":    {"value": 4},
-          "cornerRadiusBottomRight": {"value": 4},
-          "tooltip": {"signal": "{'Requerente': datum.name, 'Patentes': datum.count}"}
-        },
-        "hover": {"fill": {"value": "#79c0ff"}},
-        "update": {"fill": {"value": "#58a6ff"}}
+    // ── BUILD FILTERS ─────────────────────────────────────────────────────────────
+    function buildFilters(preserveValues = false) {
+      const anos = summaryData.available_years || [];
+      if (!anos.length) return;
+
+      const minA = Math.min(...anos), maxA = Math.max(...anos);
+
+      const slMin = document.getElementById("slMin");
+      const slMax = document.getElementById("slMax");
+
+      const currentMin = preserveValues ? Math.max(minA, +slMin.value) : minA;
+      const currentMax = preserveValues ? Math.min(maxA, +slMax.value) : maxA;
+
+      for (const [id, el, val] of [["slMin", slMin, currentMin], ["slMax", slMax, currentMax]]) {
+        el.min = minA; el.max = maxA; el.value = val;
       }
-    }]
-  };
-  return renderSpec("vg5", spec);
-}
+      document.getElementById("anoMin").textContent = currentMin;
+      document.getElementById("anoMax").textContent = currentMax;
 
-// ── CHART 6: Inventores (Vega puro) ──────────────────────────────────────────
-function buildVg6() {
-  const invs = topN(counter(filtered.flatMap(d => d.inventors)), 15)
-    .map(([name, count]) => ({ name, count }));
-  const names = invs.map(r => r.name);
-  const maxC  = Math.max(...invs.map(r => r.count));
+      const newSlMin = slMin.cloneNode(true);
+      const newSlMax = slMax.cloneNode(true);
+      slMin.parentNode.replaceChild(newSlMin, slMin);
+      slMax.parentNode.replaceChild(newSlMax, slMax);
 
-  const spec = {
-    "$schema": "https://vega.github.io/schema/vega/v5.json",
-    "height": names.length * 28 + 20,
-    "padding": {"left": 200, "right": 20, "top": 10, "bottom": 40},
-    "data": [{"name": "table", "values": invs}],
-    "scales": [
-      { "name": "xscale", "type": "linear", "domain": [0, maxC], "range": "width", "nice": true },
-      { "name": "yscale", "type": "band",   "domain": names, "range": "height", "paddingInner": 0.25, "paddingOuter": 0.05 }
-    ],
-    "axes": [
-      { "orient": "bottom", "scale": "xscale", "labelColor": MUTED, "domainColor": GRID, "tickColor": GRID, "labelFont": FONT, "grid": true, "gridColor": GRID, "title": "Patentes", "titleColor": MUTED, "titleFont": FONT },
-      { "orient": "left",   "scale": "yscale", "labelColor": TEXT,  "domainColor": GRID, "tickColor": GRID, "labelFont": FONT }
-    ],
-    "marks": [{
-      "type": "rect",
-      "from": {"data": "table"},
-      "encode": {
-        "enter": {
-          "x": {"value": 0},
-          "x2": {"scale": "xscale", "field": "count"},
-          "y": {"scale": "yscale", "field": "name"},
-          "height": {"scale": "yscale", "band": 1},
-          "fill": {"value": "#3fb950"},
-          "cornerRadiusTopRight":    {"value": 4},
-          "cornerRadiusBottomRight": {"value": 4},
-          "tooltip": {"signal": "{'Inventor': datum.name, 'Patentes': datum.count}"}
-        },
-        "hover": {"fill": {"value": "#56d364"}},
-        "update": {"fill": {"value": "#3fb950"}}
-      }
-    }]
-  };
-  return renderSpec("vg6", spec);
-}
+      newSlMin.addEventListener("change", applyFilters);
+      newSlMax.addEventListener("change", applyFilters);
+      newSlMin.addEventListener("input", () => {
+        if (+newSlMin.value > +newSlMax.value) newSlMin.value = newSlMax.value;
+        document.getElementById("anoMin").textContent = newSlMin.value;
+      });
+      newSlMax.addEventListener("input", () => {
+        if (+newSlMax.value < +newSlMin.value) newSlMax.value = newSlMin.value;
+        document.getElementById("anoMax").textContent = newSlMax.value;
+      });
 
-// ── TABLE ─────────────────────────────────────────────────────────────────────
-function renderTable() {
-  const start   = (page - 1) * PAGE_SIZE;
-  const slice   = filtered.slice(start, start + PAGE_SIZE);
-  const total   = filtered.length;
-  const maxPage = Math.ceil(total / PAGE_SIZE) || 1;
+      buildChecks("statusList", summaryData.available_statuses);
+      buildChecks("tipoList", summaryData.available_tipos);
+    }
 
-  document.getElementById("tblCap").textContent =
-    `Exibindo ${fmt(start + 1)}–${fmt(Math.min(start + PAGE_SIZE, total))} de ${fmt(total)} registros`;
-  document.getElementById("pagInfo").textContent = `Página ${page} de ${maxPage}`;
-  document.getElementById("btnPrev").disabled = page <= 1;
-  document.getElementById("btnNext").disabled = page >= maxPage;
+    function buildChecks(id, opts) {
+      const el = document.getElementById(id);
+      el.innerHTML = opts.map(o =>
+        `<label class="chk-item"><input type="checkbox" value="${o}" onchange="applyFilters()"> ${o}</label>`
+      ).join("");
+    }
 
-  document.getElementById("tblBody").innerHTML = slice.map(d =>
-    `<tr>
-      <td>${d.ano_deposito || "—"}</td>
-      <td title="${d.titulo}">${d.titulo.length > 80 ? d.titulo.slice(0, 80) + "…" : d.titulo}</td>
-      <td><span class="badge ${badgeClass(d.status)}">${d.status}</span></td>
-      <td>${d.tipo}</td>
-      <td>${d.pais}</td>
-    </tr>`
-  ).join("");
-}
+    function getChecked(id) {
+      return [...document.querySelectorAll(`#${id} input:checked`)].map(i => i.value);
+    }
 
-window.changePage = delta => { page += delta; renderTable(); };
+    async function applyFilters() {
+      setLoaderMsg("Filtrando dados no servidor…");
+      await loadData();
+      page = 1;
+      updateAll();
+    }
 
-// ── UPDATE ALL ────────────────────────────────────────────────────────────────
-async function updateAll() {
-  updateMetrics();
-  await Promise.all([
-    buildVg1(), buildVg2(), buildVg3(),
-    buildVg4(), buildVg5(), buildVg6()
-  ]);
-  renderTable();
-}
+    // ── METRICS ───────────────────────────────────────────────────────────────────
+    function updateMetrics() {
+      document.getElementById("mTotal").textContent = fmt(totalBase);
+      document.getElementById("mFiltered").textContent = fmt(filteredCount);
+      document.getElementById("mAnos").textContent = summaryData.available_years.length;
+      document.getElementById("mStatus").textContent = summaryData.available_statuses.length;
+      document.getElementById("caption").textContent =
+        `Fonte: IBICT — pi-api-dev.ibict.br | ${fmt(totalBase)} registros na base (todos os anos)`;
+    }
 
-// ── INIT ──────────────────────────────────────────────────────────────────────
-(async () => {
-  try {
-    await loadData();
-    filtered = allData.filter(d => d.ano_deposito);
-    buildFilters();
-    await updateAll();
-  } catch(e) {
-    document.getElementById("loader").innerHTML =
-      `<p style="color:#f78166">❌ Erro ao carregar dados: ${e.message}</p>`;
-    return;
-  }
-  const loader = document.getElementById("loader");
-  loader.style.opacity = "0";
-  setTimeout(() => loader.style.display = "none", 500);
+    // ── VEGA PURO — renderizador ──────────────────────────────────────────────────
+    function renderSpec(id, spec) {
+      return new Promise((resolve) => {
+        let completed = false;
+        const finish = (val) => {
+          if (completed) return;
+          completed = true;
+          console.timeEnd(`render-${id}`);
+          resolve(val);
+        };
 
-  document.getElementById("btnRefresh").addEventListener("click", async btn => {
-    const b = document.getElementById("btnRefresh");
-    b.textContent = "⏳ Atualizando…"; b.disabled = true;
-    await loadData(true);
-    filtered = allData.filter(d => d.ano_deposito);
-    buildFilters();
-    await updateAll();
-    b.textContent = "🔄 Atualizar dados"; b.disabled = false;
-  });
+        // Timeout de segurança por gráfico: 5 segundos
+        const timer = setTimeout(() => {
+          if (!completed) {
+            console.warn(`[vega] Render timeout for ${id}`);
+            const container = document.getElementById(id);
+            if (container) {
+              container.innerHTML = `<div style="color:var(--muted); font-size:0.8rem; padding:20px; text-align:center; border:1px dashed var(--border); border-radius:8px;">⚠️ Tempo limite de renderização excedido (${id})</div>`;
+            }
+            finish(null);
+          }
+        }, 5000);
 
-  const btnHistory = document.getElementById("btnHistory");
-  if (btnHistory) {
-    btnHistory.addEventListener("click", async () => {
-      btnHistory.textContent = "⏳ Iniciando download...";
-      btnHistory.disabled = true;
-      document.getElementById("btnRefresh").disabled = true;
+        try {
+          console.time(`render-${id}`);
+          const container = document.getElementById(id);
+          if (!container) { clearTimeout(timer); return finish(null); }
 
-      // Chama a tela de carregamento
-      loader.style.display = "flex"; 
-      loader.style.opacity = "1";
-      setLoaderProgress(0);
+          if (views[id]) {
+            try { views[id].finalize(); } catch (e) { }
+            delete views[id];
+          }
 
-      // Dispara o download em background no proxy
+          // Limpeza da Spec: remove $schema para evitar hits de rede que causam hangs
+          delete spec.$schema;
+          spec.background = BG;
+          spec.padding = spec.padding ?? { left: 60, right: 20, top: 10, bottom: 50 };
+          
+          spec.autosize = { type: "fit-x", contains: "padding" };
+          spec.width = containerWidth(id, spec._minW || 0);
+
+          // Vega parse pode ser pesado, rodamos em um micro-timeout para não travar a UI
+          setTimeout(() => {
+            try {
+              const runtime = vega.parse(spec);
+              const view = new vega.View(runtime, {
+                renderer: "canvas",
+                container: container,
+                hover: true,
+              });
+
+              view.runAsync()
+                .then(v => {
+                  clearTimeout(timer);
+                  v._minW = spec._minW || 0;
+                  views[id] = v;
+                  finish(v);
+                })
+                .catch(err => {
+                  clearTimeout(timer);
+                  console.error(`[vega] ${id}:`, err);
+                  container.innerHTML = `<div style="color:var(--accent2); font-size:0.8rem; padding:20px; text-align:center;">❌ Erro ao carregar gráfico (${id})</div>`;
+                  finish(null);
+                });
+            } catch (e) {
+              clearTimeout(timer);
+              console.error(`[vega] Error parsing ${id}:`, e);
+              container.innerHTML = `<div style="color:var(--accent2); font-size:0.8rem; padding:20px; text-align:center;">❌ Erro de sintaxe Vega (${id})</div>`;
+              finish(null);
+            }
+          }, 10);
+        } catch (e) {
+          clearTimeout(timer);
+          console.error(`[vega] Fatal error ${id}:`, e);
+          finish(null);
+        }
+      });
+    }
+
+    // ── CHART 1: Stacked Bar por Ano (Vega puro) ─────────────────────────────────
+    function buildVg1() {
+      const rows = summaryData.agg_year_status;
+      const anos = [...new Set(rows.map(r => r.ano))].sort();
+      const statuses = [...new Set(rows.map(r => r.status))];
+
+      const spec = {
+        "height": 360,
+        "_minW": anos.length * 30 + 100,
+        "data": [
+          {
+            "name": "table", "values": rows,
+            "transform": [
+              { "type": "stack", "groupby": ["ano"], "field": "count", "sort": { "field": "status" }, "as": ["y0", "y1"] }
+            ]
+          }
+        ],
+        "scales": [
+          { "name": "xscale", "type": "band", "domain": anos, "range": "width", "paddingInner": 0.15, "paddingOuter": 0.05 },
+          { "name": "yscale", "type": "linear", "domain": { "data": "table", "field": "y1" }, "nice": true, "range": "height" },
+          { "name": "color", "type": "ordinal", "domain": statuses, "range": PALETTE }
+        ],
+        "axes": [
+          { "orient": "bottom", "scale": "xscale", "labelColor": MUTED, "domainColor": GRID, "tickColor": GRID, "labelFont": FONT, "labelAngle": -40, "labelAlign": "right", "title": "Ano de Depósito", "titleColor": MUTED, "titleFont": FONT },
+          { "orient": "left", "scale": "yscale", "labelColor": MUTED, "domainColor": GRID, "tickColor": GRID, "labelFont": FONT, "grid": true, "gridColor": GRID, "title": "Número de Patentes", "titleColor": MUTED, "titleFont": FONT }
+        ],
+        "legends": [legendStyle("color", "Status")],
+        "marks": [{
+          "type": "rect",
+          "from": { "data": "table" },
+          "encode": {
+            "enter": {
+              "x": { "scale": "xscale", "field": "ano" },
+              "width": { "scale": "xscale", "band": 1 },
+              "y": { "scale": "yscale", "field": "y0" },
+              "y2": { "scale": "yscale", "field": "y1" },
+              "fill": { "scale": "color", "field": "status" },
+              "tooltip": { "signal": "{'Ano': datum.ano, 'Status': datum.status, 'Patentes': datum.count}" }
+            },
+            "hover": { "fillOpacity": { "value": 0.75 } },
+            "update": { "fillOpacity": { "value": 1 } }
+          }
+        }]
+      };
+      return renderSpec("vg1", spec);
+    }
+
+    // ── CHART 2: Grouped Bar CPC vs IPC (Vega puro) ───────────────────────────────
+    function buildVg2() {
+      const rows = [...summaryData.top_cpc, ...summaryData.top_ipc];
+      const top10codes = [...new Set(rows.map(r => r.codigo))];
+      const maxCount = Math.max(...rows.map(r => r.count));
+      const bandH = 26;
+
+      const spec = {
+        "height": top10codes.length * bandH * 2 + 20,
+        "_minW": 700,
+        "padding": { "left": 160, "right": 20, "top": 10, "bottom": 40 },
+        "data": [{ "name": "table", "values": rows }],
+        "scales": [
+          { "name": "xscale", "type": "linear", "domain": [0, maxCount], "range": "width", "nice": true },
+          { "name": "yscale", "type": "band", "domain": top10codes, "range": "height", "paddingInner": 0.2, "paddingOuter": 0.05 },
+          { "name": "yoffset", "type": "band", "domain": ["CPC", "IPC"], "range": { "signal": "[0, bandwidth('yscale')]" } },
+          { "name": "color", "type": "ordinal", "domain": ["CPC", "IPC"], "range": ["#58a6ff", "#ffa657"] }
+        ],
+        "axes": [
+          { "orient": "bottom", "scale": "xscale", "labelColor": MUTED, "domainColor": GRID, "tickColor": GRID, "labelFont": FONT, "grid": true, "gridColor": GRID, "title": "Número de Patentes", "titleColor": MUTED, "titleFont": FONT },
+          { "orient": "left", "scale": "yscale", "labelColor": TEXT, "domainColor": GRID, "tickColor": GRID, "labelFont": FONT, "title": "Classificação", "titleColor": MUTED, "titleFont": FONT }
+        ],
+        "legends": [legendStyle("color", "Sistema")],
+        "marks": [{
+          "type": "rect",
+          "from": { "data": "table" },
+          "encode": {
+            "enter": {
+              "x": { "value": 0 },
+              "x2": { "scale": "xscale", "field": "count" },
+              "y": { "signal": "scale('yscale', datum.codigo) + scale('yoffset', datum.sistema)" },
+              "height": { "signal": "bandwidth('yoffset') - 2" },
+              "fill": { "scale": "color", "field": "sistema" },
+              "cornerRadiusTopRight": { "value": 3 },
+              "cornerRadiusBottomRight": { "value": 3 },
+              "tooltip": { "signal": "{'Código': datum.codigo, 'Sistema': datum.sistema, 'Patentes': datum.count}" }
+            },
+            "hover": { "fillOpacity": { "value": 0.75 } },
+            "update": { "fillOpacity": { "value": 1 } }
+          }
+        }]
+      };
+      return renderSpec("vg2", spec);
+    }
+
+    // ── CHART 3: 100% Normalized Stacked (Vega puro) ─────────────────────────────
+    function buildVg3() {
+      const rows = summaryData.agg_year_status;
+      const anos = [...new Set(rows.map(r => r.ano))].sort();
+      const statuses = [...new Set(rows.map(r => r.status))];
+
+      const spec = {
+        "height": 340,
+        "_minW": anos.length * 30 + 100,
+        "data": [
+          {
+            "name": "table", "values": rows,
+            "transform": [
+              { "type": "stack", "groupby": ["ano"], "field": "count", "offset": "normalize", "sort": { "field": "status" }, "as": ["y0", "y1"] }
+            ]
+          }
+        ],
+        "scales": [
+          { "name": "xscale", "type": "band", "domain": anos, "range": "width", "paddingInner": 0.15, "paddingOuter": 0.05 },
+          { "name": "yscale", "type": "linear", "domain": [0, 1], "range": "height" },
+          { "name": "color", "type": "ordinal", "domain": statuses, "range": PALETTE }
+        ],
+        "axes": [
+          { "orient": "bottom", "scale": "xscale", "labelColor": MUTED, "domainColor": GRID, "tickColor": GRID, "labelFont": FONT, "labelAngle": -40, "labelAlign": "right", "title": "Ano de Depósito", "titleColor": MUTED, "titleFont": FONT },
+          { "orient": "left", "scale": "yscale", "labelColor": MUTED, "domainColor": GRID, "tickColor": GRID, "labelFont": FONT, "grid": true, "gridColor": GRID, "format": ".0%", "title": "Proporção (%)", "titleColor": MUTED, "titleFont": FONT }
+        ],
+        "legends": [legendStyle("color", "Status")],
+        "marks": [{
+          "type": "rect",
+          "from": { "data": "table" },
+          "encode": {
+            "enter": {
+              "x": { "scale": "xscale", "field": "ano" },
+              "width": { "scale": "xscale", "band": 1 },
+              "y": { "scale": "yscale", "field": "y0" },
+              "y2": { "scale": "yscale", "field": "y1" },
+              "fill": { "scale": "color", "field": "status" },
+              "tooltip": { "signal": "{'Ano': datum.ano, 'Status': datum.status, 'Patentes': datum.count}" }
+            },
+            "hover": { "fillOpacity": { "value": 0.75 } },
+            "update": { "fillOpacity": { "value": 1 } }
+          }
+        }]
+      };
+      return renderSpec("vg3", spec);
+    }
+
+    // ── CHART 4: Gantt (Vega puro) ────────────────────────────────────────────────
+    async function buildVg4() {
+      const rows = summaryData.gantt_data.slice(0, 50).sort((a, b) => a.inicio - b.inicio);
+      if (!rows.length) return renderSpec("vg4", { "data": [], "marks": [] });
+
+      const reqs = rows.map(r => r.requerente);
+      const allYrs = rows.flatMap(r => [r.inicio, r.fim]);
+      const minYr = Math.min(...allYrs);
+      const maxYr = Math.max(...allYrs);
+      const maxTot = Math.max(...rows.map(r => r.total));
+
+      const spec = {
+        "description": "Timeline de Concessão",
+        "height": rows.length * 28 + 20,
+        "_minW": 900,
+        "padding": { "left": 230, "right": 20, "top": 10, "bottom": 40 },
+        "data": [{ "name": "table", "values": rows }],
+        "scales": [
+          { "name": "xscale", "type": "linear", "domain": [minYr - 1, maxYr + 1], "range": "width", "nice": false },
+          { "name": "yscale", "type": "band", "domain": reqs, "range": "height", "paddingInner": 0.3, "paddingOuter": 0.1 },
+          { "name": "color", "type": "linear", "domain": [0, maxTot], "range": ["#1e3a5f", "#58a6ff"] }
+        ],
+        "axes": [
+          { "orient": "bottom", "scale": "xscale", "labelColor": MUTED, "domainColor": GRID, "tickColor": GRID, "labelFont": FONT, "grid": true, "gridColor": GRID, "format": "d", "title": "Ano", "titleColor": MUTED, "titleFont": FONT },
+          { "orient": "left", "scale": "yscale", "labelColor": TEXT, "domainColor": GRID, "tickColor": GRID, "labelFont": FONT }
+        ],
+        "legends": [{ "fill": "color", "title": "Total de patentes", "orient": "right", "titleColor": MUTED, "labelColor": TEXT, "titleFont": FONT, "labelFont": FONT, "type": "gradient" }],
+        "marks": [{
+          "type": "rect",
+          "from": { "data": "table" },
+          "encode": {
+            "enter": {
+              "x": { "scale": "xscale", "field": "inicio" },
+              "x2": { "scale": "xscale", "field": "fim" },
+              "y": { "scale": "yscale", "field": "requerente" },
+              "height": { "scale": "yscale", "band": 1 },
+              "fill": { "scale": "color", "field": "total" },
+              "cornerRadiusTopRight": { "value": 4 },
+              "cornerRadiusBottomRight": { "value": 4 },
+              "tooltip": { "signal": "{'Requerente': datum.requerente, 'Depósito': datum.inicio, 'Concessão': datum.fim, 'Patentes': datum.total}" }
+            },
+            "hover": { "fillOpacity": { "value": 0.75 } },
+            "update": { "fillOpacity": { "value": 1 } }
+          }
+        }]
+      };
       try {
-        await fetch(`http://${HOST}:8888/fetch-history`, { method: "GET" }).catch(() => {});
-        await new Promise(r => setTimeout(r, 1000));
-        
-        // Polling para os anos históricos
-        await waitForCache(false);
-
-        // Terminou o cache histórico. Traz o arquivo resultante gigante!
-        setLoaderMsg("✅ Arquivo histórico baixado, renderizando interface...");
-        const url  = `http://${HOST}:8888/full-data`;
-        const resp = await fetch(url, { headers: { Accept: "application/json" } });
-        const json = await resp.json();
-        
-        totalBase = json.total || json.count || 0;
-        allData   = (json.results || []).map(mapDoc);
-
-        filtered = allData.filter(d => d.ano_deposito);
-        buildFilters(false); // reseta os filtros para abranger tudo
-        await updateAll();
-        
-        loader.style.opacity = "0";
-        setTimeout(() => loader.style.display = "none", 500);
-        
-        btnHistory.textContent = "✅ Histórico completo carregado";
-        btnHistory.style.display = "none"; // Hide button once fetched
-        document.getElementById("btnRefresh").disabled = false;
-
-      } catch(e) {
-        alert("Erro ao buscar histórico: " + e.message);
-        btnHistory.textContent = "📚 Tentar novamente";
-        btnHistory.disabled = false;
-        loader.style.opacity = "0";
-        setTimeout(() => loader.style.display = "none", 500);
+        await renderSpec("vg4", spec);
+      } catch (e) {
+        console.error("Gantt failed:", e);
       }
+    }
+
+    // ── CHART 5: Requerentes (Vega puro) ─────────────────────────────────────────
+    function buildVg5() {
+      const rows = summaryData.top_applicants || [];
+      if (!rows.length) return renderSpec("vg5", { "data": [], "marks": [] });
+
+      const names = rows.map(r => r.name);
+      const maxC = Math.max(...rows.map(r => r.count), 0);
+
+      const spec = {
+        "height": names.length * 28 + 20,
+        "_minW": 600,
+        "padding": { "left": 230, "right": 20, "top": 10, "bottom": 40 },
+        "data": [{ "name": "table", "values": rows }],
+        "scales": [
+          { "name": "xscale", "type": "linear", "domain": [0, maxC], "range": "width", "nice": true },
+          { "name": "yscale", "type": "band", "domain": names, "range": "height", "paddingInner": 0.25, "paddingOuter": 0.05 }
+        ],
+        "axes": [
+          { "orient": "bottom", "scale": "xscale", "labelColor": MUTED, "domainColor": GRID, "tickColor": GRID, "labelFont": FONT, "grid": true, "gridColor": GRID, "title": "Patentes", "titleColor": MUTED, "titleFont": FONT },
+          { "orient": "left", "scale": "yscale", "labelColor": TEXT, "domainColor": GRID, "tickColor": GRID, "labelFont": FONT }
+        ],
+        "marks": [{
+          "type": "rect",
+          "from": { "data": "table" },
+          "encode": {
+            "enter": {
+              "x": { "value": 0 },
+              "x2": { "scale": "xscale", "field": "count" },
+              "y": { "scale": "yscale", "field": "name" },
+              "height": { "scale": "yscale", "band": 1 },
+              "fill": { "value": "#58a6ff" },
+              "cornerRadiusTopRight": { "value": 4 },
+              "cornerRadiusBottomRight": { "value": 4 },
+              "tooltip": { "signal": "{'Requerente': datum.name, 'Patentes': datum.count}" }
+            },
+            "hover": { "fill": { "value": "#79c0ff" } },
+            "update": { "fill": { "value": "#58a6ff" } }
+          }
+        }]
+      };
+      return renderSpec("vg5", spec);
+    }
+
+    // ── CHART 6: Inventores (Vega puro) ──────────────────────────────────────────
+    function buildVg6() {
+      const rows = summaryData.top_inventors || [];
+      if (!rows.length) return renderSpec("vg6", { "data": [], "marks": [] });
+
+      const names = rows.map(r => r.name);
+      const maxC = Math.max(...rows.map(r => r.count), 0);
+
+      const spec = {
+        "height": names.length * 28 + 20,
+        "_minW": 600,
+        "padding": { "left": 230, "right": 20, "top": 10, "bottom": 40 },
+        "data": [{ "name": "table", "values": rows }],
+        "scales": [
+          { "name": "xscale", "type": "linear", "domain": [0, maxC], "range": "width", "nice": true },
+          { "name": "yscale", "type": "band", "domain": names, "range": "height", "paddingInner": 0.25, "paddingOuter": 0.05 }
+        ],
+        "axes": [
+          { "orient": "bottom", "scale": "xscale", "labelColor": MUTED, "domainColor": GRID, "tickColor": GRID, "labelFont": FONT, "grid": true, "gridColor": GRID, "title": "Patentes", "titleColor": MUTED, "titleFont": FONT },
+          { "orient": "left", "scale": "yscale", "labelColor": TEXT, "domainColor": GRID, "tickColor": GRID, "labelFont": FONT }
+        ],
+        "marks": [{
+          "type": "rect",
+          "from": { "data": "table" },
+          "encode": {
+            "enter": {
+              "x": { "value": 0 },
+              "x2": { "scale": "xscale", "field": "count" },
+              "y": { "scale": "yscale", "field": "name" },
+              "height": { "scale": "yscale", "band": 1 },
+              "fill": { "value": "#3fb950" },
+              "cornerRadiusTopRight": { "value": 4 },
+              "cornerRadiusBottomRight": { "value": 4 },
+              "tooltip": { "signal": "{'Inventor': datum.name, 'Patentes': datum.count}" }
+            },
+            "hover": { "fill": { "value": "#56d364" } },
+            "update": { "fill": { "value": "#3fb950" } }
+          }
+        }]
+      };
+      return renderSpec("vg6", spec);
+    }
+
+    // ── TABLE ─────────────────────────────────────────────────────────────────────
+    function renderTable() {
+      const start = (page - 1) * PAGE_SIZE;
+      const list = summaryData.recent_table || [];
+      const slice = list.slice(start, start + PAGE_SIZE);
+      const total = summaryData.filtered_count || list.length;
+      const maxPage = Math.ceil(list.length / PAGE_SIZE) || 1; // Limitada aos 100 carregados
+
+      document.getElementById("tblCap").textContent =
+        `Exibindo ${fmt(start + 1)}–${fmt(Math.min(start + PAGE_SIZE, list.length))} de ${fmt(total)} registros (mostrando top 100)`;
+      document.getElementById("pagInfo").textContent = `Página ${page} de ${maxPage}`;
+      document.getElementById("btnPrev").disabled = page <= 1;
+      document.getElementById("btnNext").disabled = page >= maxPage;
+
+      document.getElementById("tblBody").innerHTML = slice.map(d => {
+        const titulo = d.title || "Sem título";
+        return `<tr>
+      <td>${d.deposit_year || "—"}</td>
+      <td title="${titulo}">${titulo.length > 80 ? titulo.slice(0, 80) + "…" : titulo}</td>
+      <td><span class="badge ${badgeClass(d.status)}">${d.status}</span></td>
+      <td>${d.patent_type || "—"}</td>
+      <td>${d.country_code || "BR"}</td>
+    </tr>`;
+      }).join("");
+    }
+
+    window.changePage = delta => { page += delta; renderTable(); };
+
+    async function updateAll() {
+      updateMetrics();
+
+      const charts = [
+        { id: "vg1", name: "Patentes por Ano", fn: buildVg1 },
+        { id: "vg2", name: "Top Classificações (CPC/IPC)", fn: buildVg2 },
+        { id: "vg3", name: "Proporção de Status", fn: buildVg3 },
+        { id: "vg4", name: "Timeline de Concessão", fn: buildVg4 },
+        { id: "vg5", name: "Principais Requerentes", fn: buildVg5 },
+        { id: "vg6", name: "Principais Inventores", fn: buildVg6 }
+      ];
+
+      setLoaderMsg(`Iniciando renderização de ${charts.length} gráficos...`);
+      setLoaderProgress(0.92);
+
+      // Renderização PARALELA para evitar hangs sequenciais
+      let completedCount = 0;
+      const renderPromises = charts.map(async (c) => {
+        try {
+          console.log(`[dash] Renderizando: ${c.name}`);
+
+          // Cada gráfico tem seu próprio timeout de 8s (um pouco mais que o interno de 5s)
+          await Promise.race([
+            c.fn(),
+            new Promise(r => setTimeout(() => {
+              console.warn(`[dash] ${c.name} render took too long, skipping wait.`);
+              r(null);
+            }, 8000))
+          ]);
+        } catch (e) {
+          console.warn(`[dash] Falha ao renderizar ${c.name}:`, e);
+        } finally {
+          completedCount++;
+          setLoaderMsg(`Gráficos: ${completedCount}/${charts.length} concluídos...`);
+          setLoaderProgress(0.92 + (0.08 * (completedCount / charts.length)));
+        }
+      });
+
+      // Aguarda todos os gráficos (ou seus timeouts)
+      await Promise.allSettled(renderPromises);
+
+      renderTable();
+      setLoaderProgress(1.0);
+      console.log("[dash] Atualização completa.");
+    }
+
+    // ── INIT ──────────────────────────────────────────────────────────────────────
+    (async () => {
+      try {
+        await loadData();
+        buildFilters();
+        await updateAll();
+        hideLoader();
+      } catch (e) {
+        console.error(e);
+        const msg = document.getElementById("loader-msg");
+        if (msg) {
+          msg.innerHTML = `⚠️ <b>Erro ao carregar dashboard:</b><br>${e.message}<br><br>Verifique se o proxy está rodando em http://127.0.0.1:8888`;
+          msg.style.color = "#ff7b72";
+        }
+      } finally {
+        hideLoader();
+      }
+    })();
+
+    const btnRefresh = document.getElementById("btnRefresh");
+    if (btnRefresh) {
+      btnRefresh.addEventListener("click", async () => {
+        btnRefresh.textContent = "⏳ Atualizando..."; btnRefresh.disabled = true;
+
+        // Timer de segurança global: o loader SUMIRÁ em no máximo 10s não importa o que aconteça
+        const safeEnd = setTimeout(() => {
+          console.warn("[dash] Safety hide triggered after 10s.");
+          hideLoader();
+          btnRefresh.textContent = "🔄 Atualizar dados"; btnRefresh.disabled = false;
+        }, 10000);
+
+        try {
+          await loadData(true);
+          buildFilters(true);
+          await updateAll();
+        } finally {
+          clearTimeout(safeEnd);
+          hideLoader();
+          btnRefresh.textContent = "🔄 Atualizar dados"; btnRefresh.disabled = false;
+        }
+      });
+    }
+
+    const btnHistory = document.getElementById("btnHistory");
+    if (btnHistory) btnHistory.style.display = "none";
+    
+    // ── VEGA RESPONSIVE RESIZE ───────────────────────────────────────────────────
+    let resizeTimer;
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => {
+        Object.keys(views).forEach(id => {
+          const v = views[id];
+          if (v) {
+            v.width(containerWidth(id, v._minW || 0)).runAsync();
+          }
+        });
+      }, 250);
     });
-  }
-})();
-</script>
+  </script>
 </body>
+
 </html>

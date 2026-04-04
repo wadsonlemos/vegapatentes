@@ -1,0 +1,1909 @@
+{
+  "ready": true,
+  "total_base": 325481,
+  "filtered_count": 325481,
+  "available_years": [
+    1990,
+    1991,
+    1992,
+    1993,
+    1994,
+    1995,
+    1996,
+    1997,
+    1998,
+    1999,
+    2000,
+    2001,
+    2003,
+    2004,
+    2005,
+    2006,
+    2007,
+    2008,
+    2009,
+    2010,
+    2011,
+    2012,
+    2013,
+    2014,
+    2015,
+    2016,
+    2017,
+    2018,
+    2019,
+    2020,
+    2021,
+    2022,
+    2023,
+    2024,
+    2025
+  ],
+  "available_statuses": [
+    "Depositado",
+    "Pedido Arquivado",
+    "Pedido Deferido",
+    "Pedido Indeferido",
+    "Pedido Para Exame Técnico",
+    "Pedido Publicado",
+    "Pedido em Exame",
+    "Retirado Manualmente do Sigilo"
+  ],
+  "available_tipos": [
+    "Não informado"
+  ],
+  "agg_year_status": [
+    {
+      "ano": "2021",
+      "status": "Pedido Publicado",
+      "count": 8800
+    },
+    {
+      "ano": "2022",
+      "status": "Pedido Publicado",
+      "count": 10000
+    },
+    {
+      "ano": "2023",
+      "status": "Pedido Publicado",
+      "count": 10000
+    },
+    {
+      "ano": "2024",
+      "status": "Pedido Publicado",
+      "count": 10000
+    },
+    {
+      "ano": "2025",
+      "status": "Pedido Publicado",
+      "count": 681
+    },
+    {
+      "ano": "1990",
+      "status": "Pedido Arquivado",
+      "count": 5075
+    },
+    {
+      "ano": "1990",
+      "status": "Pedido Para Exame Técnico",
+      "count": 1005
+    },
+    {
+      "ano": "1990",
+      "status": "Pedido Publicado",
+      "count": 187
+    },
+    {
+      "ano": "1990",
+      "status": "Pedido Deferido",
+      "count": 3019
+    },
+    {
+      "ano": "1990",
+      "status": "Pedido Indeferido",
+      "count": 598
+    },
+    {
+      "ano": "1990",
+      "status": "Pedido em Exame",
+      "count": 116
+    },
+    {
+      "ano": "1991",
+      "status": "Pedido Arquivado",
+      "count": 4756
+    },
+    {
+      "ano": "1991",
+      "status": "Pedido Publicado",
+      "count": 191
+    },
+    {
+      "ano": "1991",
+      "status": "Pedido Deferido",
+      "count": 3083
+    },
+    {
+      "ano": "1991",
+      "status": "Pedido Para Exame Técnico",
+      "count": 1063
+    },
+    {
+      "ano": "1991",
+      "status": "Pedido Indeferido",
+      "count": 795
+    },
+    {
+      "ano": "1991",
+      "status": "Pedido em Exame",
+      "count": 112
+    },
+    {
+      "ano": "1992",
+      "status": "Pedido Arquivado",
+      "count": 4516
+    },
+    {
+      "ano": "1992",
+      "status": "Pedido Indeferido",
+      "count": 936
+    },
+    {
+      "ano": "1992",
+      "status": "Pedido Para Exame Técnico",
+      "count": 881
+    },
+    {
+      "ano": "1992",
+      "status": "Pedido em Exame",
+      "count": 87
+    },
+    {
+      "ano": "1992",
+      "status": "Pedido Deferido",
+      "count": 3370
+    },
+    {
+      "ano": "1992",
+      "status": "Pedido Publicado",
+      "count": 210
+    },
+    {
+      "ano": "1993",
+      "status": "Pedido Arquivado",
+      "count": 4656
+    },
+    {
+      "ano": "1993",
+      "status": "Pedido Deferido",
+      "count": 3202
+    },
+    {
+      "ano": "1993",
+      "status": "Pedido Publicado",
+      "count": 286
+    },
+    {
+      "ano": "1993",
+      "status": "Pedido Indeferido",
+      "count": 1010
+    },
+    {
+      "ano": "1993",
+      "status": "Pedido Para Exame Técnico",
+      "count": 812
+    },
+    {
+      "ano": "1993",
+      "status": "Pedido em Exame",
+      "count": 34
+    },
+    {
+      "ano": "1994",
+      "status": "Pedido Publicado",
+      "count": 352
+    },
+    {
+      "ano": "1994",
+      "status": "Pedido Indeferido",
+      "count": 1165
+    },
+    {
+      "ano": "1994",
+      "status": "Pedido Deferido",
+      "count": 3717
+    },
+    {
+      "ano": "1994",
+      "status": "Pedido Para Exame Técnico",
+      "count": 447
+    },
+    {
+      "ano": "1994",
+      "status": "Pedido Arquivado",
+      "count": 4288
+    },
+    {
+      "ano": "1994",
+      "status": "Pedido em Exame",
+      "count": 27
+    },
+    {
+      "ano": "1994",
+      "status": "Retirado Manualmente do Sigilo",
+      "count": 4
+    },
+    {
+      "ano": "1995",
+      "status": "Pedido em Exame",
+      "count": 54
+    },
+    {
+      "ano": "1995",
+      "status": "Pedido Deferido",
+      "count": 3753
+    },
+    {
+      "ano": "1995",
+      "status": "Pedido Publicado",
+      "count": 589
+    },
+    {
+      "ano": "1995",
+      "status": "Retirado Manualmente do Sigilo",
+      "count": 1
+    },
+    {
+      "ano": "1995",
+      "status": "Pedido Arquivado",
+      "count": 4364
+    },
+    {
+      "ano": "1995",
+      "status": "Pedido Para Exame Técnico",
+      "count": 300
+    },
+    {
+      "ano": "1995",
+      "status": "Pedido Indeferido",
+      "count": 939
+    },
+    {
+      "ano": "1996",
+      "status": "Pedido Deferido",
+      "count": 3108
+    },
+    {
+      "ano": "1996",
+      "status": "Pedido Publicado",
+      "count": 1409
+    },
+    {
+      "ano": "1996",
+      "status": "Pedido Indeferido",
+      "count": 1039
+    },
+    {
+      "ano": "1996",
+      "status": "Pedido Arquivado",
+      "count": 3851
+    },
+    {
+      "ano": "1996",
+      "status": "Pedido Para Exame Técnico",
+      "count": 464
+    },
+    {
+      "ano": "1996",
+      "status": "Pedido em Exame",
+      "count": 129
+    },
+    {
+      "ano": "1997",
+      "status": "Pedido Deferido",
+      "count": 3299
+    },
+    {
+      "ano": "1997",
+      "status": "Pedido Indeferido",
+      "count": 1511
+    },
+    {
+      "ano": "1997",
+      "status": "Pedido Arquivado",
+      "count": 3056
+    },
+    {
+      "ano": "1997",
+      "status": "Pedido Publicado",
+      "count": 478
+    },
+    {
+      "ano": "1997",
+      "status": "Pedido Para Exame Técnico",
+      "count": 1500
+    },
+    {
+      "ano": "1997",
+      "status": "Pedido em Exame",
+      "count": 155
+    },
+    {
+      "ano": "1997",
+      "status": "Retirado Manualmente do Sigilo",
+      "count": 1
+    },
+    {
+      "ano": "1998",
+      "status": "Pedido Deferido",
+      "count": 2907
+    },
+    {
+      "ano": "1998",
+      "status": "Pedido Arquivado",
+      "count": 3471
+    },
+    {
+      "ano": "1998",
+      "status": "Pedido Indeferido",
+      "count": 1360
+    },
+    {
+      "ano": "1998",
+      "status": "Pedido Para Exame Técnico",
+      "count": 2099
+    },
+    {
+      "ano": "1998",
+      "status": "Pedido Publicado",
+      "count": 107
+    },
+    {
+      "ano": "1998",
+      "status": "Pedido em Exame",
+      "count": 56
+    },
+    {
+      "ano": "1999",
+      "status": "Pedido Deferido",
+      "count": 2389
+    },
+    {
+      "ano": "1999",
+      "status": "Pedido Indeferido",
+      "count": 1379
+    },
+    {
+      "ano": "1999",
+      "status": "Pedido Para Exame Técnico",
+      "count": 2528
+    },
+    {
+      "ano": "1999",
+      "status": "Pedido Arquivado",
+      "count": 3535
+    },
+    {
+      "ano": "1999",
+      "status": "Pedido Publicado",
+      "count": 97
+    },
+    {
+      "ano": "1999",
+      "status": "Pedido em Exame",
+      "count": 70
+    },
+    {
+      "ano": "1999",
+      "status": "Depositado",
+      "count": 2
+    },
+    {
+      "ano": "2000",
+      "status": "Pedido Para Exame Técnico",
+      "count": 2475
+    },
+    {
+      "ano": "2000",
+      "status": "Pedido Publicado",
+      "count": 96
+    },
+    {
+      "ano": "2000",
+      "status": "Pedido Indeferido",
+      "count": 1294
+    },
+    {
+      "ano": "2000",
+      "status": "Pedido Deferido",
+      "count": 2377
+    },
+    {
+      "ano": "2000",
+      "status": "Pedido Arquivado",
+      "count": 3590
+    },
+    {
+      "ano": "2000",
+      "status": "Pedido em Exame",
+      "count": 164
+    },
+    {
+      "ano": "2000",
+      "status": "Depositado",
+      "count": 4
+    },
+    {
+      "ano": "2001",
+      "status": "Pedido Deferido",
+      "count": 2298
+    },
+    {
+      "ano": "2001",
+      "status": "Pedido Indeferido",
+      "count": 1343
+    },
+    {
+      "ano": "2001",
+      "status": "Pedido Arquivado",
+      "count": 3433
+    },
+    {
+      "ano": "2001",
+      "status": "Pedido Para Exame Técnico",
+      "count": 2421
+    },
+    {
+      "ano": "2001",
+      "status": "Pedido Publicado",
+      "count": 128
+    },
+    {
+      "ano": "2001",
+      "status": "Pedido em Exame",
+      "count": 377
+    },
+    {
+      "ano": "2003",
+      "status": "Pedido em Exame",
+      "count": 114
+    },
+    {
+      "ano": "2003",
+      "status": "Pedido Deferido",
+      "count": 313
+    },
+    {
+      "ano": "2003",
+      "status": "Pedido Arquivado",
+      "count": 797
+    },
+    {
+      "ano": "2003",
+      "status": "Pedido Indeferido",
+      "count": 217
+    },
+    {
+      "ano": "2003",
+      "status": "Pedido Para Exame Técnico",
+      "count": 446
+    },
+    {
+      "ano": "2003",
+      "status": "Pedido Publicado",
+      "count": 113
+    },
+    {
+      "ano": "2004",
+      "status": "Pedido Arquivado",
+      "count": 3867
+    },
+    {
+      "ano": "2004",
+      "status": "Pedido Deferido",
+      "count": 1490
+    },
+    {
+      "ano": "2004",
+      "status": "Pedido Para Exame Técnico",
+      "count": 2724
+    },
+    {
+      "ano": "2004",
+      "status": "Pedido Indeferido",
+      "count": 1164
+    },
+    {
+      "ano": "2004",
+      "status": "Pedido Publicado",
+      "count": 353
+    },
+    {
+      "ano": "2004",
+      "status": "Pedido em Exame",
+      "count": 402
+    },
+    {
+      "ano": "2005",
+      "status": "Pedido Deferido",
+      "count": 1013
+    },
+    {
+      "ano": "2005",
+      "status": "Pedido em Exame",
+      "count": 561
+    },
+    {
+      "ano": "2005",
+      "status": "Pedido Publicado",
+      "count": 557
+    },
+    {
+      "ano": "2005",
+      "status": "Pedido Arquivado",
+      "count": 3610
+    },
+    {
+      "ano": "2005",
+      "status": "Pedido Para Exame Técnico",
+      "count": 3451
+    },
+    {
+      "ano": "2005",
+      "status": "Pedido Indeferido",
+      "count": 808
+    },
+    {
+      "ano": "2006",
+      "status": "Pedido Deferido",
+      "count": 761
+    },
+    {
+      "ano": "2006",
+      "status": "Pedido Para Exame Técnico",
+      "count": 3856
+    },
+    {
+      "ano": "2006",
+      "status": "Pedido Publicado",
+      "count": 1722
+    },
+    {
+      "ano": "2006",
+      "status": "Pedido Arquivado",
+      "count": 2378
+    },
+    {
+      "ano": "2006",
+      "status": "Pedido em Exame",
+      "count": 779
+    },
+    {
+      "ano": "2006",
+      "status": "Pedido Indeferido",
+      "count": 504
+    },
+    {
+      "ano": "2007",
+      "status": "Pedido Publicado",
+      "count": 1098
+    },
+    {
+      "ano": "2007",
+      "status": "Pedido Para Exame Técnico",
+      "count": 3852
+    },
+    {
+      "ano": "2007",
+      "status": "Pedido Arquivado",
+      "count": 3541
+    },
+    {
+      "ano": "2007",
+      "status": "Pedido Deferido",
+      "count": 581
+    },
+    {
+      "ano": "2007",
+      "status": "Pedido em Exame",
+      "count": 353
+    },
+    {
+      "ano": "2007",
+      "status": "Pedido Indeferido",
+      "count": 575
+    },
+    {
+      "ano": "2008",
+      "status": "Pedido Publicado",
+      "count": 3722
+    },
+    {
+      "ano": "2008",
+      "status": "Pedido Para Exame Técnico",
+      "count": 3591
+    },
+    {
+      "ano": "2008",
+      "status": "Pedido Indeferido",
+      "count": 480
+    },
+    {
+      "ano": "2008",
+      "status": "Pedido Arquivado",
+      "count": 1226
+    },
+    {
+      "ano": "2008",
+      "status": "Pedido em Exame",
+      "count": 457
+    },
+    {
+      "ano": "2008",
+      "status": "Pedido Deferido",
+      "count": 524
+    },
+    {
+      "ano": "2009",
+      "status": "Pedido Arquivado",
+      "count": 629
+    },
+    {
+      "ano": "2009",
+      "status": "Pedido Publicado",
+      "count": 4353
+    },
+    {
+      "ano": "2009",
+      "status": "Pedido Para Exame Técnico",
+      "count": 4292
+    },
+    {
+      "ano": "2009",
+      "status": "Pedido Indeferido",
+      "count": 102
+    },
+    {
+      "ano": "2009",
+      "status": "Pedido Deferido",
+      "count": 227
+    },
+    {
+      "ano": "2009",
+      "status": "Pedido em Exame",
+      "count": 397
+    },
+    {
+      "ano": "2010",
+      "status": "Pedido Publicado",
+      "count": 8866
+    },
+    {
+      "ano": "2010",
+      "status": "Pedido Arquivado",
+      "count": 408
+    },
+    {
+      "ano": "2010",
+      "status": "Pedido Para Exame Técnico",
+      "count": 574
+    },
+    {
+      "ano": "2010",
+      "status": "Pedido em Exame",
+      "count": 124
+    },
+    {
+      "ano": "2010",
+      "status": "Depositado",
+      "count": 1
+    },
+    {
+      "ano": "2010",
+      "status": "Pedido Indeferido",
+      "count": 10
+    },
+    {
+      "ano": "2010",
+      "status": "Pedido Deferido",
+      "count": 17
+    },
+    {
+      "ano": "2011",
+      "status": "Pedido Publicado",
+      "count": 9609
+    },
+    {
+      "ano": "2011",
+      "status": "Depositado",
+      "count": 1
+    },
+    {
+      "ano": "2011",
+      "status": "Pedido Arquivado",
+      "count": 205
+    },
+    {
+      "ano": "2011",
+      "status": "Pedido Indeferido",
+      "count": 2
+    },
+    {
+      "ano": "2011",
+      "status": "Pedido Para Exame Técnico",
+      "count": 107
+    },
+    {
+      "ano": "2011",
+      "status": "Pedido em Exame",
+      "count": 72
+    },
+    {
+      "ano": "2011",
+      "status": "Pedido Deferido",
+      "count": 4
+    },
+    {
+      "ano": "2012",
+      "status": "Pedido Publicado",
+      "count": 3945
+    },
+    {
+      "ano": "2012",
+      "status": "Pedido Deferido",
+      "count": 2
+    },
+    {
+      "ano": "2012",
+      "status": "Pedido em Exame",
+      "count": 8
+    },
+    {
+      "ano": "2012",
+      "status": "Pedido Arquivado",
+      "count": 45
+    },
+    {
+      "ano": "2013",
+      "status": "Pedido Publicado",
+      "count": 9632
+    },
+    {
+      "ano": "2013",
+      "status": "Pedido Arquivado",
+      "count": 299
+    },
+    {
+      "ano": "2013",
+      "status": "Pedido em Exame",
+      "count": 31
+    },
+    {
+      "ano": "2013",
+      "status": "Pedido Deferido",
+      "count": 22
+    },
+    {
+      "ano": "2013",
+      "status": "Pedido Indeferido",
+      "count": 16
+    },
+    {
+      "ano": "2014",
+      "status": "Pedido Publicado",
+      "count": 9752
+    },
+    {
+      "ano": "2014",
+      "status": "Pedido Arquivado",
+      "count": 172
+    },
+    {
+      "ano": "2014",
+      "status": "Pedido em Exame",
+      "count": 37
+    },
+    {
+      "ano": "2014",
+      "status": "Pedido Indeferido",
+      "count": 24
+    },
+    {
+      "ano": "2014",
+      "status": "Pedido Deferido",
+      "count": 15
+    },
+    {
+      "ano": "2015",
+      "status": "Pedido Publicado",
+      "count": 9978
+    },
+    {
+      "ano": "2015",
+      "status": "Pedido Arquivado",
+      "count": 6
+    },
+    {
+      "ano": "2015",
+      "status": "Pedido em Exame",
+      "count": 11
+    },
+    {
+      "ano": "2015",
+      "status": "Pedido Deferido",
+      "count": 2
+    },
+    {
+      "ano": "2015",
+      "status": "Pedido Indeferido",
+      "count": 3
+    },
+    {
+      "ano": "2016",
+      "status": "Pedido Publicado",
+      "count": 9987
+    },
+    {
+      "ano": "2016",
+      "status": "Pedido Arquivado",
+      "count": 7
+    },
+    {
+      "ano": "2016",
+      "status": "Pedido Deferido",
+      "count": 2
+    },
+    {
+      "ano": "2016",
+      "status": "Pedido em Exame",
+      "count": 2
+    },
+    {
+      "ano": "2016",
+      "status": "Pedido Indeferido",
+      "count": 2
+    },
+    {
+      "ano": "2017",
+      "status": "Pedido Publicado",
+      "count": 10000
+    },
+    {
+      "ano": "2018",
+      "status": "Pedido Publicado",
+      "count": 10000
+    },
+    {
+      "ano": "2019",
+      "status": "Pedido Publicado",
+      "count": 10000
+    },
+    {
+      "ano": "2020",
+      "status": "Pedido Publicado",
+      "count": 10000
+    }
+  ],
+  "top_applicants": [
+    {
+      "name": "QUALCOMM INCORPORATED",
+      "count": 3002
+    },
+    {
+      "name": "The Procter & Gamble Company",
+      "count": 1700
+    },
+    {
+      "name": "HUAWEI TECHNOLOGIES CO., LTD.",
+      "count": 1506
+    },
+    {
+      "name": "BASF SE",
+      "count": 1272
+    },
+    {
+      "name": "DOW GLOBAL TECHNOLOGIES LLC",
+      "count": 1130
+    },
+    {
+      "name": "DEERE & COMPANY",
+      "count": 1127
+    },
+    {
+      "name": "NIPPON STEEL CORPORATION",
+      "count": 1018
+    },
+    {
+      "name": "TOYOTA JIDOSHA KABUSHIKI KAISHA",
+      "count": 1012
+    },
+    {
+      "name": "Johnson & Johnson",
+      "count": 964
+    },
+    {
+      "name": "KONINKLIJKE PHILIPS N.V.",
+      "count": 945
+    },
+    {
+      "name": "Xerox Corporation",
+      "count": 906
+    },
+    {
+      "name": "The Goodyear Tire & Rubber Company",
+      "count": 864
+    },
+    {
+      "name": "THE BOEING COMPANY",
+      "count": 802
+    },
+    {
+      "name": "Unilever N.V.",
+      "count": 794
+    },
+    {
+      "name": "Bayer Aktiengesellschaft",
+      "count": 763
+    }
+  ],
+  "top_inventors": [
+    {
+      "name": "FREDERICK E. SHELTON IV",
+      "count": 225
+    },
+    {
+      "name": "TAO LUO",
+      "count": 216
+    },
+    {
+      "name": "MARTA KARCZEWICZ",
+      "count": 200
+    },
+    {
+      "name": "PETER GAAL",
+      "count": 197
+    },
+    {
+      "name": "WANSHI CHEN",
+      "count": 181
+    },
+    {
+      "name": "Heinz Focke",
+      "count": 169
+    },
+    {
+      "name": "ALEXANDROS MANOLAKOS",
+      "count": 160
+    },
+    {
+      "name": "JASON L. HARRIS",
+      "count": 129
+    },
+    {
+      "name": "YE-KUI WANG",
+      "count": 127
+    },
+    {
+      "name": "Paul Harry Sandstrom",
+      "count": 123
+    },
+    {
+      "name": "Roberto Otaviano Rossato",
+      "count": 120
+    },
+    {
+      "name": "JUNYI LI",
+      "count": 112
+    },
+    {
+      "name": "Nelson Guilherme Bardini",
+      "count": 112
+    },
+    {
+      "name": "XIAOXIA ZHANG",
+      "count": 99
+    },
+    {
+      "name": "MING GAN",
+      "count": 95
+    }
+  ],
+  "top_cpc": [
+    {
+      "codigo": "A61K 8/",
+      "sistema": "CPC",
+      "count": 8588
+    },
+    {
+      "codigo": "H04N 19",
+      "sistema": "CPC",
+      "count": 2345
+    },
+    {
+      "codigo": "A61Q 5/",
+      "sistema": "CPC",
+      "count": 1432
+    },
+    {
+      "codigo": "A61Q 19",
+      "sistema": "CPC",
+      "count": 1422
+    },
+    {
+      "codigo": "H04N 21",
+      "sistema": "CPC",
+      "count": 1411
+    },
+    {
+      "codigo": "A61K 28",
+      "sistema": "CPC",
+      "count": 1376
+    },
+    {
+      "codigo": "A61K 31",
+      "sistema": "CPC",
+      "count": 1262
+    },
+    {
+      "codigo": "A23L 33",
+      "sistema": "CPC",
+      "count": 982
+    },
+    {
+      "codigo": "H04L 1/",
+      "sistema": "CPC",
+      "count": 931
+    },
+    {
+      "codigo": "A61B 5/",
+      "sistema": "CPC",
+      "count": 897
+    }
+  ],
+  "top_ipc": [
+    {
+      "codigo": "A61K 31",
+      "sistema": "IPC",
+      "count": 29154
+    },
+    {
+      "codigo": "A61K 8/",
+      "sistema": "IPC",
+      "count": 14536
+    },
+    {
+      "codigo": "C12N 15",
+      "sistema": "IPC",
+      "count": 8773
+    },
+    {
+      "codigo": "C07D 40",
+      "sistema": "IPC",
+      "count": 8308
+    },
+    {
+      "codigo": "A61K 9/",
+      "sistema": "IPC",
+      "count": 6769
+    },
+    {
+      "codigo": "A01N 43",
+      "sistema": "IPC",
+      "count": 6533
+    },
+    {
+      "codigo": "A61K 47",
+      "sistema": "IPC",
+      "count": 5396
+    },
+    {
+      "codigo": "A61K 39",
+      "sistema": "IPC",
+      "count": 5379
+    },
+    {
+      "codigo": "H04N 19",
+      "sistema": "IPC",
+      "count": 5134
+    },
+    {
+      "codigo": "A61P 35",
+      "sistema": "IPC",
+      "count": 5115
+    }
+  ],
+  "gantt_data": [
+    {
+      "requerente": "QUALCOMM INCORPORATED",
+      "inicio": 1998,
+      "fim": 2025,
+      "total": 1297
+    },
+    {
+      "requerente": "The Procter & Gamble Company",
+      "inicio": 1990,
+      "fim": 2022,
+      "total": 718
+    },
+    {
+      "requerente": "THE BOEING COMPANY",
+      "inicio": 2010,
+      "fim": 2025,
+      "total": 610
+    },
+    {
+      "requerente": "HUAWEI TECHNOLOGIES CO., LTD.",
+      "inicio": 2001,
+      "fim": 2025,
+      "total": 573
+    },
+    {
+      "requerente": "BASF SE",
+      "inicio": 2004,
+      "fim": 2025,
+      "total": 569
+    },
+    {
+      "requerente": "Unilever N.V.",
+      "inicio": 1990,
+      "fim": 2021,
+      "total": 527
+    },
+    {
+      "requerente": "DEERE & COMPANY",
+      "inicio": 2004,
+      "fim": 2025,
+      "total": 526
+    },
+    {
+      "requerente": "DOW GLOBAL TECHNOLOGIES LLC",
+      "inicio": 2005,
+      "fim": 2025,
+      "total": 523
+    },
+    {
+      "requerente": "Johnson & Johnson",
+      "inicio": 1990,
+      "fim": 2021,
+      "total": 441
+    },
+    {
+      "requerente": "TOYOTA JIDOSHA KABUSHIKI KAISHA",
+      "inicio": 2006,
+      "fim": 2025,
+      "total": 433
+    },
+    {
+      "requerente": "Xerox Corporation",
+      "inicio": 1990,
+      "fim": 2020,
+      "total": 403
+    },
+    {
+      "requerente": "L'Oreal",
+      "inicio": 1990,
+      "fim": 2021,
+      "total": 382
+    },
+    {
+      "requerente": "HONDA MOTOR CO., LTD.",
+      "inicio": 2004,
+      "fim": 2025,
+      "total": 362
+    },
+    {
+      "requerente": "CNH INDUSTRIAL AMERICA LLC",
+      "inicio": 2012,
+      "fim": 2025,
+      "total": 352
+    },
+    {
+      "requerente": "The Goodyear Tire & Rubber Company",
+      "inicio": 1990,
+      "fim": 2020,
+      "total": 347
+    }
+  ],
+  "recent_table": [
+    {
+      "deposit_year": 2021,
+      "title": "SISTEMA DE ENRIJECIMENTO DE PELE",
+      "status": "Pedido Publicado",
+      "patent_type": null,
+      "country": null
+    },
+    {
+      "deposit_year": 2021,
+      "title": null,
+      "status": "Pedido Publicado",
+      "patent_type": null,
+      "country": null
+    },
+    {
+      "deposit_year": 2021,
+      "title": null,
+      "status": "Pedido Publicado",
+      "patent_type": null,
+      "country": null
+    },
+    {
+      "deposit_year": 2021,
+      "title": null,
+      "status": "Pedido Publicado",
+      "patent_type": null,
+      "country": null
+    },
+    {
+      "deposit_year": 2021,
+      "title": "SISTEMA DE DOSAGEM PARA PROCESSAMENTO DE PRODUTOS",
+      "status": "Pedido Publicado",
+      "patent_type": null,
+      "country": null
+    },
+    {
+      "deposit_year": 2021,
+      "title": "COLETOR DE CABELO",
+      "status": "Pedido Publicado",
+      "patent_type": null,
+      "country": null
+    },
+    {
+      "deposit_year": 2021,
+      "title": "DISPOSITIVO DE CONTROLE DE TEMPERATURA PARA BASE DE DRONES SECCIONADO QUENTE E FRIO",
+      "status": "Pedido Publicado",
+      "patent_type": null,
+      "country": null
+    },
+    {
+      "deposit_year": 2021,
+      "title": null,
+      "status": "Pedido Publicado",
+      "patent_type": null,
+      "country": null
+    },
+    {
+      "deposit_year": 2021,
+      "title": null,
+      "status": "Pedido Publicado",
+      "patent_type": null,
+      "country": null
+    },
+    {
+      "deposit_year": 2021,
+      "title": null,
+      "status": "Pedido Publicado",
+      "patent_type": null,
+      "country": null
+    },
+    {
+      "deposit_year": 2021,
+      "title": null,
+      "status": "Pedido Publicado",
+      "patent_type": null,
+      "country": null
+    },
+    {
+      "deposit_year": 2021,
+      "title": null,
+      "status": "Pedido Publicado",
+      "patent_type": null,
+      "country": null
+    },
+    {
+      "deposit_year": 2021,
+      "title": null,
+      "status": "Pedido Publicado",
+      "patent_type": null,
+      "country": null
+    },
+    {
+      "deposit_year": 2021,
+      "title": null,
+      "status": "Pedido Publicado",
+      "patent_type": null,
+      "country": null
+    },
+    {
+      "deposit_year": 2021,
+      "title": null,
+      "status": "Pedido Publicado",
+      "patent_type": null,
+      "country": null
+    },
+    {
+      "deposit_year": 2021,
+      "title": null,
+      "status": "Pedido Publicado",
+      "patent_type": null,
+      "country": null
+    },
+    {
+      "deposit_year": 2021,
+      "title": null,
+      "status": "Pedido Publicado",
+      "patent_type": null,
+      "country": null
+    },
+    {
+      "deposit_year": 2021,
+      "title": "SISTEMA PARA PRODUZIR UM PRIMEIRO MISTURADOR",
+      "status": "Pedido Publicado",
+      "patent_type": null,
+      "country": null
+    },
+    {
+      "deposit_year": 2021,
+      "title": null,
+      "status": "Pedido Publicado",
+      "patent_type": null,
+      "country": null
+    },
+    {
+      "deposit_year": 2021,
+      "title": null,
+      "status": "Pedido Publicado",
+      "patent_type": null,
+      "country": null
+    },
+    {
+      "deposit_year": 2021,
+      "title": null,
+      "status": "Pedido Publicado",
+      "patent_type": null,
+      "country": null
+    },
+    {
+      "deposit_year": 2021,
+      "title": null,
+      "status": "Pedido Publicado",
+      "patent_type": null,
+      "country": null
+    },
+    {
+      "deposit_year": 2021,
+      "title": null,
+      "status": "Pedido Publicado",
+      "patent_type": null,
+      "country": null
+    },
+    {
+      "deposit_year": 2021,
+      "title": null,
+      "status": "Pedido Publicado",
+      "patent_type": null,
+      "country": null
+    },
+    {
+      "deposit_year": 2021,
+      "title": null,
+      "status": "Pedido Publicado",
+      "patent_type": null,
+      "country": null
+    },
+    {
+      "deposit_year": 2021,
+      "title": null,
+      "status": "Pedido Publicado",
+      "patent_type": null,
+      "country": null
+    },
+    {
+      "deposit_year": 2021,
+      "title": null,
+      "status": "Pedido Publicado",
+      "patent_type": null,
+      "country": null
+    },
+    {
+      "deposit_year": 2021,
+      "title": null,
+      "status": "Pedido Publicado",
+      "patent_type": null,
+      "country": null
+    },
+    {
+      "deposit_year": 2021,
+      "title": null,
+      "status": "Pedido Publicado",
+      "patent_type": null,
+      "country": null
+    },
+    {
+      "deposit_year": 2021,
+      "title": null,
+      "status": "Pedido Publicado",
+      "patent_type": null,
+      "country": null
+    },
+    {
+      "deposit_year": 2021,
+      "title": null,
+      "status": "Pedido Publicado",
+      "patent_type": null,
+      "country": null
+    },
+    {
+      "deposit_year": 2021,
+      "title": null,
+      "status": "Pedido Publicado",
+      "patent_type": null,
+      "country": null
+    },
+    {
+      "deposit_year": 2021,
+      "title": null,
+      "status": "Pedido Publicado",
+      "patent_type": null,
+      "country": null
+    },
+    {
+      "deposit_year": 2021,
+      "title": "SISTEMA DE PURGA DE AR SOB DEMANDA PARA SISTEMAS DE REFRIGERA��O",
+      "status": "Pedido Publicado",
+      "patent_type": null,
+      "country": null
+    },
+    {
+      "deposit_year": 2021,
+      "title": null,
+      "status": "Pedido Publicado",
+      "patent_type": null,
+      "country": null
+    },
+    {
+      "deposit_year": 2021,
+      "title": null,
+      "status": "Pedido Publicado",
+      "patent_type": null,
+      "country": null
+    },
+    {
+      "deposit_year": 2021,
+      "title": null,
+      "status": "Pedido Publicado",
+      "patent_type": null,
+      "country": null
+    },
+    {
+      "deposit_year": 2021,
+      "title": null,
+      "status": "Pedido Publicado",
+      "patent_type": null,
+      "country": null
+    },
+    {
+      "deposit_year": 2021,
+      "title": null,
+      "status": "Pedido Publicado",
+      "patent_type": null,
+      "country": null
+    },
+    {
+      "deposit_year": 2021,
+      "title": null,
+      "status": "Pedido Publicado",
+      "patent_type": null,
+      "country": null
+    },
+    {
+      "deposit_year": 2021,
+      "title": null,
+      "status": "Pedido Publicado",
+      "patent_type": null,
+      "country": null
+    },
+    {
+      "deposit_year": 2021,
+      "title": "PAINÉIS SOLARES AUTORREFRIGERANTES E RECICLÁVEIS",
+      "status": "Pedido Publicado",
+      "patent_type": null,
+      "country": null
+    },
+    {
+      "deposit_year": 2021,
+      "title": "INGREDIENTE PROTEICO, MÉTODO PARA PRODUZIR UM INGREDIENTE PROTEICO, PREPARAÇÃO OLEOSA, E, USO DO INGREDIENTE PROTEICO",
+      "status": "Pedido Publicado",
+      "patent_type": null,
+      "country": null
+    },
+    {
+      "deposit_year": 2021,
+      "title": "PRENILTRANSFERASES E MÉTODOS DE PREPARAÇÃO E USO DAS MESMAS",
+      "status": "Pedido Publicado",
+      "patent_type": null,
+      "country": null
+    },
+    {
+      "deposit_year": 2021,
+      "title": "HIDROXIUREIAMETIL-ACILFULVENO PARA TRATAMENTO DE CÂNCER CEREBRAL OU CÂNCER DO SNC",
+      "status": "Pedido Publicado",
+      "patent_type": null,
+      "country": null
+    },
+    {
+      "deposit_year": 2021,
+      "title": "COMPOSIÇÕES E MÉTODOS PARA DOENÇAS NEUROLÓGICAS",
+      "status": "Pedido Publicado",
+      "patent_type": null,
+      "country": null
+    },
+    {
+      "deposit_year": 2021,
+      "title": "MÉTODO E SISTEMA DE DETECÇÃO DE SENSOR DE POSIÇÃO DE BATENTE DE LANÇA DE FLUIDO",
+      "status": "Pedido Publicado",
+      "patent_type": null,
+      "country": null
+    },
+    {
+      "deposit_year": 2021,
+      "title": "MÉTODOS E APARELHO PARA DEFINIÇÃO DE FONTE DE BITS EM QUADRO DE ACIONAMENTO PARA BITS DE DESCONSIDERAÇÃO E LIBERAÇÃO DE BIT FORMADO POR FEIXE REDUNDANTE",
+      "status": "Pedido Publicado",
+      "patent_type": null,
+      "country": null
+    },
+    {
+      "deposit_year": 2021,
+      "title": "INIBIDORES DE SARM1, COMPOSIÇÕES QUE OS COMPREENDEM, USOS DOS MESMOS, MÉTODOS PARA INIBIR SARM1, E COMBINAÇÕES",
+      "status": "Pedido Publicado",
+      "patent_type": null,
+      "country": null
+    },
+    {
+      "deposit_year": 2021,
+      "title": "CONSTRUÇÃO DE ÁCIDO NUCLEICO, VIRUS INFLUENZA RECOMBINANTE, MÉTODO PARA PREPARAR UM VIRUS INFLUENZA RECOMBINANTE, COMPOSIÇÃO, E, USO",
+      "status": "Pedido Publicado",
+      "patent_type": null,
+      "country": null
+    },
+    {
+      "deposit_year": 2021,
+      "title": "INIBIDORES DE PEQUENAS MOLÉCULAS DA INTERAÇÃO FRS2-FGFR E SEU USO EM MEDICINA, NA PREVENÇÃO E TRATAMENTO DO CÂNCER",
+      "status": "Pedido Publicado",
+      "patent_type": null,
+      "country": null
+    },
+    {
+      "deposit_year": 2021,
+      "title": "FORMULAÇÕES NÃO PORCINAS E MÉTODOS DAS MESMAS",
+      "status": "Pedido Publicado",
+      "patent_type": null,
+      "country": null
+    },
+    {
+      "deposit_year": 2021,
+      "title": "TERAPIA RETRÓGRADA PERCUTÂNEA PARA EMBOLIA PULMONAR",
+      "status": "Pedido Publicado",
+      "patent_type": null,
+      "country": null
+    },
+    {
+      "deposit_year": 2021,
+      "title": "ABORDAGEM MULTIMODAL PARA SOLUÇÃO SEGURA E FECHADA DE MONITORAMENTO E CONTROLE DE DADOS DE USUÁRIO",
+      "status": "Pedido Publicado",
+      "patent_type": null,
+      "country": null
+    },
+    {
+      "deposit_year": 2021,
+      "title": "MÉTODO DE GESTÃO INTEGRADA PARA PREVENIR A PROPAGAÇÃO DE DOENÇAS CONTAGIOSAS",
+      "status": "Pedido Publicado",
+      "patent_type": null,
+      "country": null
+    },
+    {
+      "deposit_year": 2021,
+      "title": "COMPOSIÇÕES IMUNOGÊNICAS E USOS DAS MESMAS",
+      "status": "Pedido Publicado",
+      "patent_type": null,
+      "country": null
+    },
+    {
+      "deposit_year": 2021,
+      "title": "COMPOSIÇÃO APLICADA A PASTA DE RECOBRIMENTO COM RESISTÂNCIA À ÁGUA",
+      "status": "Pedido Publicado",
+      "patent_type": null,
+      "country": null
+    },
+    {
+      "deposit_year": 2021,
+      "title": "MÉTODO DE DESCOBERTA DE DISPOSITIVO DE MÚLTIPLOS ENLACES DE PONTO DE ACESSO AP E APARELHO RELACIONADO",
+      "status": "Pedido Publicado",
+      "patent_type": null,
+      "country": null
+    },
+    {
+      "deposit_year": 2021,
+      "title": "USO DE INIBIDORES DE ALDOSE REDUTASE PARA TRATAR DEFICIÊNCIA EM SORBITOL DESIDROGENASE",
+      "status": "Pedido Publicado",
+      "patent_type": null,
+      "country": null
+    },
+    {
+      "deposit_year": 2021,
+      "title": "MÉTODO DE REALIMENTAÇÃO DE INFORMAÇÕES DE CANAL, APARELHOS E SISTEMA DE COMUNICAÇÃO E MEIO DE ARMAZENAMENTO LEGÍVEL POR COMPUTADOR",
+      "status": "Pedido Publicado",
+      "patent_type": null,
+      "country": null
+    },
+    {
+      "deposit_year": 2021,
+      "title": "BICO REFRATÁRIO",
+      "status": "Pedido Publicado",
+      "patent_type": null,
+      "country": null
+    },
+    {
+      "deposit_year": 2021,
+      "title": "COMPOSIÇÕES COMPREENDENDO EXTRATOS DE CARUM CARVI E ROSMARINUS OFFICINALIS E MÉTODOS PARA USO DOS MESMOS",
+      "status": "Pedido Publicado",
+      "patent_type": null,
+      "country": null
+    },
+    {
+      "deposit_year": 2021,
+      "title": "AGENTE PARA INDUÇÃO DE IMUNIDADE ESPECÍFICA CONTRA O VÍRUS DA SÍNDROME RESPIRATÓRIA AGUDA GRAVE SARS-COV-2 EM FORMA LIOFILIZADA (VARIANTES) E USO",
+      "status": "Pedido Publicado",
+      "patent_type": null,
+      "country": null
+    },
+    {
+      "deposit_year": 2021,
+      "title": "TRATAMENTO DE CÂNCER DE PULMÃO DE CÉLULAS NÃO PEQUENAS COM MUTAÇÕES EM EGFR.",
+      "status": "Pedido Publicado",
+      "patent_type": null,
+      "country": null
+    },
+    {
+      "deposit_year": 2021,
+      "title": "MÉTODOS E SISTEMAS PARA DENSIDADES DE TAMANHO DE FRAGMENTOS DE DNA SEM CÉLULAS PARA AVALIAR O CÂNCER",
+      "status": "Pedido Publicado",
+      "patent_type": null,
+      "country": null
+    },
+    {
+      "deposit_year": 2021,
+      "title": "ANODO DE BATERIA COM CONDUTIVIDADE ELÉTRICA APERFEIÇOADA PARA USO EM UMA BATERIA",
+      "status": "Pedido Publicado",
+      "patent_type": null,
+      "country": null
+    },
+    {
+      "deposit_year": 2021,
+      "title": "DISPOSITIVO DE AQUECIMENTO, CIRCUITO DE RECIRCULAÇÃO, PROCESSO DE GESTÃO DE UM DISPOSITIVO DE AQUECIMENTO, E, PROCESSO DE GESTÃO DE CIRCUITO DE RECIRCULAÇÃO DOS GASES QUEIMADOS DE UMA LINHA DE ESCAPAMENTO DE MOTOR TÉRMICO",
+      "status": "Pedido Publicado",
+      "patent_type": null,
+      "country": null
+    },
+    {
+      "deposit_year": 2021,
+      "title": "ALIMENTADOR AUTOMÁTICO DE PRESSÃO",
+      "status": "Pedido Publicado",
+      "patent_type": null,
+      "country": null
+    },
+    {
+      "deposit_year": 2021,
+      "title": "SELEÇÃO AUTOMÁTICA DE MODELOS ATRAVÉS DE APRENDIZADO DE MÁQUINA",
+      "status": "Pedido Publicado",
+      "patent_type": null,
+      "country": null
+    },
+    {
+      "deposit_year": 2021,
+      "title": "DERIVADOS DE SAPONINA COM JANELA TERAPÊUTICA MELHORADA",
+      "status": "Pedido Publicado",
+      "patent_type": null,
+      "country": null
+    },
+    {
+      "deposit_year": 2021,
+      "title": "AGENTE PARA INDUZIR IMUNIDADE ESPECÍFICA CONTRA O VÍRUS DA SÍNDROME RESPIRATÓRIA AGUDA GRAVE SARS-COV-2 NA FORMA LÍQUIDA (VARIANTES) E SEU USO",
+      "status": "Pedido Publicado",
+      "patent_type": null,
+      "country": null
+    },
+    {
+      "deposit_year": 2021,
+      "title": "ARRANJO SOLAR PORTÁTIL COM MECANISMO DE TRAVAMENTO PARA MAXIMIZAR A SAÍDA ELÉTRICA",
+      "status": "Pedido Publicado",
+      "patent_type": null,
+      "country": null
+    },
+    {
+      "deposit_year": 2021,
+      "title": "VITROCERÂMICA, PRODUTO VITROCERÂMICO E SEUS MÉTODOS DE FABRICAÇÃO",
+      "status": "Pedido Publicado",
+      "patent_type": null,
+      "country": null
+    },
+    {
+      "deposit_year": 2021,
+      "title": "GERENCIAMENTO DE EXECUÇÃO DE HANDOVER",
+      "status": "Pedido Publicado",
+      "patent_type": null,
+      "country": null
+    },
+    {
+      "deposit_year": 2021,
+      "title": "COMPOSTOS DE INDOL COMO MODULADORES DE RECEPTOR DE ANDROGÊNIO, COMPOSIÇÃO FARMACÊUTICA COMPREENDENDO OS REFERIDOS COMPOSTOS E USOS DOS MESMOS",
+      "status": "Pedido Publicado",
+      "patent_type": null,
+      "country": null
+    },
+    {
+      "deposit_year": 2021,
+      "title": null,
+      "status": "Pedido Publicado",
+      "patent_type": null,
+      "country": null
+    },
+    {
+      "deposit_year": 2021,
+      "title": null,
+      "status": "Pedido Publicado",
+      "patent_type": null,
+      "country": null
+    },
+    {
+      "deposit_year": 2021,
+      "title": null,
+      "status": "Pedido Publicado",
+      "patent_type": null,
+      "country": null
+    },
+    {
+      "deposit_year": 2021,
+      "title": null,
+      "status": "Pedido Publicado",
+      "patent_type": null,
+      "country": null
+    },
+    {
+      "deposit_year": 2021,
+      "title": null,
+      "status": "Pedido Publicado",
+      "patent_type": null,
+      "country": null
+    },
+    {
+      "deposit_year": 2021,
+      "title": null,
+      "status": "Pedido Publicado",
+      "patent_type": null,
+      "country": null
+    },
+    {
+      "deposit_year": 2021,
+      "title": null,
+      "status": "Pedido Publicado",
+      "patent_type": null,
+      "country": null
+    },
+    {
+      "deposit_year": 2021,
+      "title": null,
+      "status": "Pedido Publicado",
+      "patent_type": null,
+      "country": null
+    },
+    {
+      "deposit_year": 2021,
+      "title": null,
+      "status": "Pedido Publicado",
+      "patent_type": null,
+      "country": null
+    },
+    {
+      "deposit_year": 2021,
+      "title": null,
+      "status": "Pedido Publicado",
+      "patent_type": null,
+      "country": null
+    },
+    {
+      "deposit_year": 2021,
+      "title": null,
+      "status": "Pedido Publicado",
+      "patent_type": null,
+      "country": null
+    },
+    {
+      "deposit_year": 2021,
+      "title": null,
+      "status": "Pedido Publicado",
+      "patent_type": null,
+      "country": null
+    },
+    {
+      "deposit_year": 2021,
+      "title": null,
+      "status": "Pedido Publicado",
+      "patent_type": null,
+      "country": null
+    },
+    {
+      "deposit_year": 2021,
+      "title": null,
+      "status": "Pedido Publicado",
+      "patent_type": null,
+      "country": null
+    },
+    {
+      "deposit_year": 2021,
+      "title": null,
+      "status": "Pedido Publicado",
+      "patent_type": null,
+      "country": null
+    },
+    {
+      "deposit_year": 2021,
+      "title": null,
+      "status": "Pedido Publicado",
+      "patent_type": null,
+      "country": null
+    },
+    {
+      "deposit_year": 2021,
+      "title": null,
+      "status": "Pedido Publicado",
+      "patent_type": null,
+      "country": null
+    },
+    {
+      "deposit_year": 2021,
+      "title": null,
+      "status": "Pedido Publicado",
+      "patent_type": null,
+      "country": null
+    },
+    {
+      "deposit_year": 2021,
+      "title": null,
+      "status": "Pedido Publicado",
+      "patent_type": null,
+      "country": null
+    },
+    {
+      "deposit_year": 2021,
+      "title": null,
+      "status": "Pedido Publicado",
+      "patent_type": null,
+      "country": null
+    },
+    {
+      "deposit_year": 2021,
+      "title": "POSTE DE CARREGAMENTO",
+      "status": "Pedido Publicado",
+      "patent_type": null,
+      "country": null
+    },
+    {
+      "deposit_year": 2021,
+      "title": "CODIFICAÇÃO DE VÍDEO ESCALÁVEL DE TAXA DE QUADROS",
+      "status": "Pedido Publicado",
+      "patent_type": null,
+      "country": null
+    },
+    {
+      "deposit_year": 2021,
+      "title": "DISPOSITIVOS DILATÁVEIS TERMOFIXOS E MÉTODOS DE USO EM POÇOS PETROLÍFEROS",
+      "status": "Pedido Publicado",
+      "patent_type": null,
+      "country": null
+    },
+    {
+      "deposit_year": 2021,
+      "title": "ÁCIDOS GRAXOS POLINSATURADOS DE CADEIA MUITO LONGA, DERIVADOS HIDROXILADOS DE ELOVÓIDE E MÉTODOS DE USO",
+      "status": "Pedido Publicado",
+      "patent_type": null,
+      "country": null
+    },
+    {
+      "deposit_year": 2021,
+      "title": "RADIOPEPTÍDEOS COM BASE EM [161TB], SEUS USOS, COMPOSIÇÃO FARMACÊUTICA, E KIT",
+      "status": "Pedido Publicado",
+      "patent_type": null,
+      "country": null
+    }
+  ]
+}

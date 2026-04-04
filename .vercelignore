@@ -1,0 +1,9 @@
+# Impedir o upload do arquivo pesado de cache para a plataforma Vercel
+# A Vercel utilizará somente o ibict_summary.json (41KB) e não os 2.78 GB.
+ibict_cache.json
+.git
+.gitignore
+proxy.py
+proxy.log
+fetch_data.py
+summarize.py
