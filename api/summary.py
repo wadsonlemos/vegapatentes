@@ -9,15 +9,25 @@ def load_summary():
     global _cache_data
     if _cache_data is not None:
         return True
-    # Na Vercel, o api/summary.py acessa o ibict_summary.json na raiz do projeto (..)
-    path = os.path.join(os.path.dirname(__file__), '..', 'ibict_summary.json')
-    try:
-        with open(path, 'r', encoding='utf-8') as f:
-            _cache_data = json.load(f)
-        return True
-    except Exception as e:
-        print("Erro ao carregar summary:", e)
-        return False
+    # Vercel às vezes reestrutura pacotes Lambda. Tentaremos várias rotas:
+    paths = [
+        os.path.join(os.path.dirname(__file__), '..', 'ibict_summary.json'),
+        os.path.join(os.path.dirname(__file__), 'ibict_summary.json'),
+        '/var/task/ibict_summary.json',
+        'ibict_summary.json'
+    ]
+    
+    for path in paths:
+        try:
+            if os.path.exists(path):
+                with open(path, 'r', encoding='utf-8') as f:
+                    _cache_data = json.load(f)
+                return True
+        except Exception as e:
+            pass
+
+    print("Erro crítico: ibict_summary.json não encontrado em nenhum path Vercel")
+    return False
 
 def get_cors_headers():
     return {
@@ -35,12 +45,10 @@ class handler(BaseHTTPRequestHandler):
         self.end_headers()
 
     def do_GET(self):
-        # Trata o CORS e verifica o carregamento
-        for k, v in get_cors_headers().items():
-            self.send_header(k, v)
-
         if not load_summary():
             self.send_response(503)
+            for k, v in get_cors_headers().items():
+                self.send_header(k, v)
             self.end_headers()
             return
 
