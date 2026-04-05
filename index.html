@@ -1218,9 +1218,9 @@
       if (!rows.length) return renderSpec("vg4", { "data": [], "marks": [] });
 
       const reqs = rows.map(r => r.requerente);
-      const allYrs = rows.flatMap(r => [r.inicio, r.fim]);
-      const minYr = Math.min(...allYrs);
-      const maxYr = Math.max(...allYrs);
+      const allYrs = rows.flatMap(r => [r.inicio, r.fim]).filter(y => y > 1900);
+      const minYr = allYrs.length ? Math.min(...allYrs) : 1990;
+      const maxYr = allYrs.length ? Math.max(...allYrs) : 2025;
       const maxTot = Math.max(...rows.map(r => r.total));
 
       const spec = {
