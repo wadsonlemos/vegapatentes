@@ -1230,7 +1230,7 @@
         "padding": { "left": 230, "right": 20, "top": 10, "bottom": 40 },
         "data": [{ "name": "table", "values": rows }],
         "scales": [
-          { "name": "xscale", "type": "linear", "domain": [minYr - 1, maxYr + 1], "range": "width", "nice": false },
+          { "name": "xscale", "type": "linear", "domain": [minYr - 1, maxYr + 1], "range": "width", "nice": false, "zero": false },
           { "name": "yscale", "type": "band", "domain": reqs, "range": "height", "paddingInner": 0.3, "paddingOuter": 0.1 },
           { "name": "color", "type": "linear", "domain": [0, maxTot], "range": ["#1e3a5f", "#58a6ff"] }
         ],
